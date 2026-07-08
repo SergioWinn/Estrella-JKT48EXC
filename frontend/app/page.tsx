@@ -224,6 +224,21 @@ function getWarnLimit(category?: string): number {
 	return category === "TWO_SHOT" || category === "DIGITAL_PHOTOBOOK" ? 5 : 20;
 }
 
+function getSortTimestamp(value?: string | null): number {
+	const parsed = value ? parseApiDate(value) ?? parseWibLocalDate(value) : null;
+	return parsed?.getTime() ?? 0;
+}
+
+function compareEventsByRecency(a: EventDetail, b: EventDetail): number {
+	const releaseDiff = getSortTimestamp(b.valid_date_from) - getSortTimestamp(a.valid_date_from);
+
+	if (releaseDiff !== 0) {
+		return releaseDiff;
+	}
+
+	return getSortTimestamp(getEventCloseDate(b)) - getSortTimestamp(getEventCloseDate(a));
+}
+
 function buildMemberMaps(members: MemberRecord[]): {
 	nicknameMap: Map<string, string>;
 	photoMap: Map<string, string>;
@@ -515,7 +530,7 @@ export default function Page() {
 
 			return results
 				.filter((event): event is EventDetail => event !== null && event.status !== false)
-				.sort((a, b) => (b.valid_date_from ?? "").localeCompare(a.valid_date_from ?? ""));
+				.sort(compareEventsByRecency);
 		},
 	);
 
@@ -528,6 +543,13 @@ export default function Page() {
 			const list = mapped.get(categoryLabel) ?? [];
 			list.push({ data: event, label: eventLabel });
 			mapped.set(categoryLabel, list);
+		}
+
+		for (const [categoryLabel, list] of mapped.entries()) {
+			mapped.set(
+				categoryLabel,
+				[...list].sort((a, b) => compareEventsByRecency(a.data, b.data)),
+			);
 		}
 
 		return mapped;

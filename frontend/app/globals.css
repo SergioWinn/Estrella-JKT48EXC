@@ -209,10 +209,14 @@ a {
 .member-card-progress-text {
   position: relative;
   z-index: 1;
+  display: inline-flex;
+  min-width: 8ch;
+  justify-content: center;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.5px;
   color: #ffffff;
+  font-variant-numeric: tabular-nums;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
