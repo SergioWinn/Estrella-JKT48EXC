@@ -39,22 +39,24 @@ export function MemberCard({ card }: MemberCardProps) {
 
 	const content = (
 		<>
-			{card.badgeLabel ? (
+			<div className="mb-3 flex w-full min-w-0 items-start justify-between gap-2 sm:mb-4">
 				<div
-					className={`absolute right-3 top-3 z-10 rounded-full px-2 py-1 text-[9px] font-extrabold tracking-[0.12em] shadow-[0_2px_5px_rgba(0,0,0,0.12)] sm:right-4 sm:top-4 ${
-						card.badgeClassName === "member-card-badge-warn"
-							? "bg-amber-400 text-slate-950"
-							: "bg-emerald-500 text-white"
-					}`}
-				>
-					{card.badgeLabel}
-				</div>
-			) : null}
-			<div
-				className="mb-2 w-full overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.18em] text-white/60 sm:mb-2.5 sm:text-[11px] lg:text-xs"
-				dangerouslySetInnerHTML={{ __html: card.metaHtml }}
-				title={card.metaHtml.replace(/<br\s*\/?>/gi, " ").replace(/&nbsp;/g, " ")}
-			/>
+					className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap pt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/60 sm:text-[11px] lg:text-xs"
+					dangerouslySetInnerHTML={{ __html: card.metaHtml }}
+					title={card.metaHtml.replace(/<br\s*\/?>/gi, " ").replace(/&nbsp;/g, " ")}
+				/>
+				{card.badgeLabel ? (
+					<div
+						className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-extrabold tracking-[0.12em] shadow-[0_2px_5px_rgba(0,0,0,0.12)] ${
+							card.badgeClassName === "member-card-badge-warn"
+								? "bg-amber-400 text-slate-950"
+								: "bg-emerald-500 text-white"
+						}`}
+					>
+						{card.badgeLabel}
+					</div>
+				) : null}
+			</div>
 			<div className="relative mb-3 size-16 overflow-hidden rounded-full border-2 border-white/15 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.15)] sm:mb-4 sm:size-[4.5rem]">
 				{/* eslint-disable-next-line @next/next/no-img-element */}
 				<img
