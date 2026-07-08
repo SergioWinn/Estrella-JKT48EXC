@@ -75,8 +75,17 @@ interface EventMetrics {
 	totalTickets: number;
 }
 
-const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://127.0.0.1:8787";
+class ApiError extends Error {
+	statusCode?: number;
+
+	constructor(message: string, statusCode?: number) {
+		super(message);
+		this.name = "ApiError";
+		this.statusCode = statusCode;
+	}
+}
+
+const API_BASE_URL = "https://api.estrella19.workers.dev";
 
 const FALLBACK_CODES = ["EX783D", "EX9A4A", "EXCD2C", "EXCB75"];
 const FALLBACK_IMAGE =
@@ -87,6 +96,12 @@ const CATEGORY_LABELS: Record<string, string> = {
 	TWO_SHOT: "📸 2-Shot",
 	PHOTOCARD: "🤝 Meet & Greet",
 };
+
+const FOCUSED_POLLING = {
+	refreshInterval: 3000,
+	refreshWhenHidden: false,
+	revalidateOnFocus: true,
+} as const;
 
 const fetcher = async <T,>(path: string): Promise<T> => {
 	const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -100,11 +115,15 @@ const fetcher = async <T,>(path: string): Promise<T> => {
 	};
 
 	if (!response.ok || payload.status === false) {
-		throw new Error(payload.message ?? payload.error ?? "Request failed");
+		throw new ApiError(payload.message ?? payload.error ?? "Request failed", response.status);
 	}
 
 	return payload;
 };
+
+function isWaitingRoomError(error: unknown): boolean {
+	return error instanceof ApiError && (error.statusCode === 429 || error.statusCode === 503);
+}
 
 function getNowWib(): Date {
 	return new Date(Date.now() + 7 * 60 * 60 * 1000);
@@ -466,12 +485,12 @@ export default function Page() {
 		data: membersResponse,
 		error: membersError,
 		isLoading: membersLoading,
-	} = useSWR<ApiEnvelope<MemberRecord[]>>("/members", fetcher);
+	} = useSWR<ApiEnvelope<MemberRecord[]>>("/members", fetcher, FOCUSED_POLLING);
 	const {
 		data: codesResponse,
 		error: codesError,
 		isLoading: codesLoading,
-	} = useSWR<ApiEnvelope<ExclusiveListItem[] | { data?: ExclusiveListItem[] }>>("/exclusives", fetcher);
+	} = useSWR<ApiEnvelope<ExclusiveListItem[] | { data?: ExclusiveListItem[] }>>("/exclusives", fetcher, FOCUSED_POLLING);
 
 	const activeCodes = useMemo(() => {
 		const data = codesResponse?.data;
@@ -525,11 +544,7 @@ export default function Page() {
 	const detailSWR = useSWR<ApiEnvelope<EventDetail>>(
 		activeEventCode ? `/exclusives/${activeEventCode}` : null,
 		fetcher,
-		{
-			refreshInterval: 3000,
-			refreshWhenHidden: false,
-			revalidateOnFocus: true,
-		},
+		FOCUSED_POLLING,
 	);
 
 	const currentEvent = detailSWR.data?.data ?? activeEvent;
@@ -606,6 +621,14 @@ export default function Page() {
 	const pageError = membersError ?? codesError ?? eventsError;
 	const detailError = detailSWR.error;
 	const isLoading = membersLoading || codesLoading || eventsLoading;
+	const workerWaitingRoom = isWaitingRoomError(pageError) || isWaitingRoomError(detailError);
+	const workerErrorMessage = workerWaitingRoom
+		? "Worker upstream is in Waiting Room / rate-limited. Retrying every 3 seconds while this tab is focused."
+		: pageError
+			? `Failed to load worker data. ${String(pageError.message)}`
+			: detailError
+				? `Failed to refresh worker data. ${String(detailError.message)}`
+				: null;
 
 	return (
 		<main className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6">
@@ -639,16 +662,36 @@ export default function Page() {
 				</div>
 			</header>
 
-			{pageError ? (
-				<div className="rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-100">
-					Failed to load the base event data. {String(pageError.message)}
+			{workerErrorMessage ? (
+				<div
+					className={`mb-4 rounded-2xl p-4 text-sm ${
+						workerWaitingRoom
+							? "border border-amber-400/25 bg-amber-500/10 text-amber-100"
+							: "border border-red-400/25 bg-red-500/10 text-red-100"
+					}`}
+				>
+					{workerWaitingRoom ? "⚠️ " : ""}
+					{workerErrorMessage}
 				</div>
 			) : null}
 
 			{isLoading ? (
-				<div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
-					⏳ Fetching latest JKT48 Exclusive data...
-				</div>
+				<section className="mb-6 space-y-4">
+					<div className="h-28 animate-pulse rounded-3xl border border-white/10 bg-white/6" />
+					<div className="grid gap-4 md:grid-cols-3">
+						<div className="h-24 animate-pulse rounded-2xl border border-white/10 bg-white/6" />
+						<div className="h-24 animate-pulse rounded-2xl border border-white/10 bg-white/6" />
+						<div className="h-24 animate-pulse rounded-2xl border border-white/10 bg-white/6" />
+					</div>
+					<div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-5 max-[500px]:grid-cols-2 max-[500px]:gap-3">
+						{Array.from({ length: 6 }).map((_, index) => (
+							<div
+								className="h-64 animate-pulse rounded-2xl border border-white/10 bg-white/6"
+								key={index}
+							/>
+						))}
+					</div>
+				</section>
 			) : null}
 
 			{!isLoading && !categoryKeys.length ? (
@@ -731,9 +774,13 @@ export default function Page() {
 								</p>
 							</section>
 
-							{detailError ? (
+							{workerWaitingRoom ? (
 								<div className="mb-4 rounded-2xl border border-amber-400/25 bg-amber-500/10 p-4 text-sm text-amber-100">
-									⚠️ JKT48 Server is currently in Cloudflare Waiting Room / Down. Showing last known good data in memory.
+									⚠️ Worker upstream is currently in Cloudflare Waiting Room / rate-limited. Showing last known good data in memory.
+								</div>
+							) : detailError ? (
+								<div className="mb-4 rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-100">
+									Failed to refresh worker data. Showing last known good data in memory.
 								</div>
 							) : (
 								<p className="mb-4 text-sm text-white/65">🔄 Live Data - Last Updated: {formatTime(nowWib)} WIB</p>
