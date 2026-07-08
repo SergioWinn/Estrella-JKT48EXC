@@ -46,7 +46,7 @@ export function MemberCard({ card }: MemberCardProps) {
 		<>
 			{card.badgeLabel ? (
 				<div
-					className={`pointer-events-none absolute -right-8 top-3 z-10 w-24 rotate-45 select-none py-1 text-center text-[8px] font-extrabold uppercase tracking-[0.18em] shadow-[0_8px_18px_rgba(0,0,0,0.18)] sm:-right-7 sm:w-24 lg:-right-8 lg:top-2.5 lg:w-[5.5rem] ${ribbonClassName}`}
+					className={`pointer-events-none absolute -right-9 top-3 z-10 w-[6.4rem] rotate-45 select-none py-[3px] text-center text-[7px] font-extrabold uppercase tracking-[0.16em] shadow-[0_8px_18px_rgba(0,0,0,0.18)] sm:-right-8 sm:w-[6.3rem] lg:-right-9 lg:top-2.5 lg:w-[6.15rem] ${ribbonClassName}`}
 				>
 					{card.badgeLabel}
 				</div>
