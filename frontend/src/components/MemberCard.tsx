@@ -20,6 +20,7 @@ export interface MemberCardViewModel {
 
 interface MemberCardProps {
 	card: MemberCardViewModel;
+	recentlyUpdated?: boolean;
 }
 
 const statusClasses: Record<CardStatus, string> = {
@@ -33,9 +34,14 @@ const statusClasses: Record<CardStatus, string> = {
 		"relative flex min-h-full flex-col items-center overflow-hidden rounded-[1.15rem] border border-white/12 border-b-[5px] border-b-slate-500 bg-[linear-gradient(180deg,rgba(51,65,85,0.34),rgba(30,41,59,0.22))] px-3 py-4 text-center opacity-85 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-transform duration-200 sm:px-4 sm:py-5 lg:px-3 lg:py-3.5 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_18px_36px_rgba(0,0,0,0.28)]",
 };
 
-export function MemberCard({ card }: MemberCardProps) {
+export function MemberCard({ card, recentlyUpdated = false }: MemberCardProps) {
 	const isInactive = card.status === "sold" || card.status === "closed";
 	const isClosed = card.status === "closed";
+	const articleClassName = `${statusClasses[card.status]} ${
+		recentlyUpdated
+			? "ring-2 ring-emerald-300/70 shadow-[0_0_0_1px_rgba(110,231,183,0.28),0_0_28px_rgba(16,185,129,0.22)]"
+			: ""
+	}`;
 
 	const content = (
 		<>
@@ -123,7 +129,7 @@ export function MemberCard({ card }: MemberCardProps) {
 							}}
 						/>
 						<div
-						className="relative z-10 flex min-h-11 w-full min-w-0 items-center justify-center px-2 text-[11px] font-extrabold tracking-[0.12em] text-white text-shadow-[0_1px_3px_rgba(0,0,0,0.5)] sm:text-xs lg:min-h-10 lg:text-[10px]"
+							className="relative z-10 flex min-h-11 w-full min-w-0 items-center justify-center px-2 text-[11px] font-extrabold tracking-[0.12em] text-white text-shadow-[0_1px_3px_rgba(0,0,0,0.5)] sm:text-xs lg:min-h-10 lg:text-[10px]"
 							dangerouslySetInnerHTML={{ __html: card.buttonLabel }}
 						/>
 					</div>
@@ -132,5 +138,5 @@ export function MemberCard({ card }: MemberCardProps) {
 		</>
 	);
 
-	return <article className={statusClasses[card.status]}>{content}</article>;
+	return <article className={articleClassName}>{content}</article>;
 }

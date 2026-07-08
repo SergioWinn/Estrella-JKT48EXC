@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { MemberCard, type MemberCardViewModel } from "@/src/components/MemberCard";
 
@@ -237,6 +237,10 @@ function compareEventsByRecency(a: EventDetail, b: EventDetail): number {
 	}
 
 	return getSortTimestamp(getEventCloseDate(b)) - getSortTimestamp(getEventCloseDate(a));
+}
+
+function getCardSignature(card: MemberCardViewModel): string {
+	return [card.status, card.soldCount, card.progressPercent, card.buttonLabel, card.badgeLabel ?? "", card.metaHtml].join("|");
 }
 
 function buildMemberMaps(members: MemberRecord[]): {
@@ -595,6 +599,9 @@ export default function Page() {
 	const visibleSessions = isSearchMode
 		? dateKeys.flatMap((key) => groupedSessions.get(key) ?? [])
 		: groupedSessions.get(activeDate) ?? [];
+	const [recentlyUpdatedCardIds, setRecentlyUpdatedCardIds] = useState<string[]>([]);
+	const previousCardSignaturesRef = useRef<Map<string, string>>(new Map());
+	const previousViewKeyRef = useRef("");
 
 	const cards = (() => {
 		if (!currentEvent) {
@@ -639,6 +646,38 @@ export default function Page() {
 			});
 		});
 	})();
+
+	useEffect(() => {
+		const normalizedSearch = searchQuery.trim().toLowerCase();
+		const viewKey = [activeEventCode ?? "", activeDate, normalizedSearch, availableOnly ? "available" : "all"].join("|");
+		const currentSignatures = new Map(cards.map((card) => [card.id, getCardSignature(card)]));
+
+		if (previousViewKeyRef.current !== viewKey) {
+			previousViewKeyRef.current = viewKey;
+			previousCardSignaturesRef.current = currentSignatures;
+			setRecentlyUpdatedCardIds([]);
+			return;
+		}
+
+		const previousSignatures = previousCardSignaturesRef.current;
+		const changedIds = cards
+			.filter((card) => previousSignatures.has(card.id) && previousSignatures.get(card.id) !== getCardSignature(card))
+			.map((card) => card.id);
+
+		previousCardSignaturesRef.current = currentSignatures;
+
+		if (!changedIds.length) {
+			return;
+		}
+
+		setRecentlyUpdatedCardIds(changedIds);
+
+		const timeoutId = window.setTimeout(() => {
+			setRecentlyUpdatedCardIds((current) => current.filter((id) => !changedIds.includes(id)));
+		}, 1400);
+
+		return () => window.clearTimeout(timeoutId);
+	}, [activeDate, activeEventCode, availableOnly, cards, searchQuery]);
 
 	const pageError = membersError ?? codesError ?? eventsError;
 	const detailError = detailSWR.error;
@@ -783,11 +822,20 @@ export default function Page() {
 								<div className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300/75">Lane Filter</div>
 								<div className="truncate text-sm text-white">Choose what the board shows</div>
 							</div>
-							<div className="ml-auto inline-flex shrink-0 rounded-full border border-white/10 bg-slate-900/95 p-1">
+							<div className="relative ml-auto grid h-10 w-[180px] shrink-0 grid-cols-2 rounded-full border border-white/10 bg-slate-900/95 p-1">
+								<span
+									aria-hidden="true"
+									className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full transition-all duration-300 ease-out ${
+										availableOnly
+											? "translate-x-full bg-emerald-400 shadow-[0_4px_12px_rgba(16,185,129,0.22)]"
+											: "translate-x-0 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.18)]"
+									}`}
+								/>
 								<button
-									className={`min-h-9 rounded-full px-3 text-[11px] font-bold uppercase tracking-[0.14em] transition ${
+									aria-pressed={!availableOnly}
+									className={`relative z-10 min-h-9 rounded-full px-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors duration-200 ${
 										!availableOnly
-											? "bg-white text-slate-950 shadow-[0_4px_12px_rgba(0,0,0,0.18)]"
+											? "text-slate-950"
 											: "text-white/62 hover:text-white"
 									}`}
 									onClick={() => setAvailableOnly(false)}
@@ -796,9 +844,10 @@ export default function Page() {
 									All lanes
 								</button>
 								<button
-									className={`min-h-9 rounded-full px-3 text-[11px] font-bold uppercase tracking-[0.14em] transition ${
+									aria-pressed={availableOnly}
+									className={`relative z-10 min-h-9 rounded-full px-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors duration-200 ${
 										availableOnly
-											? "bg-emerald-400 text-slate-950 shadow-[0_4px_12px_rgba(16,185,129,0.22)]"
+											? "text-slate-950"
 											: "text-white/62 hover:text-white"
 									}`}
 									onClick={() => setAvailableOnly(true)}
@@ -829,7 +878,19 @@ export default function Page() {
 									Failed to refresh worker data. Showing last known good data in memory.
 								</div>
 							) : (
-								<p className="mb-4 text-sm text-white/65">🔄 Live Data - Last Updated: {formatTime(nowWib)} WIB</p>
+								<div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-white/65">
+									<p className="m-0">🔄 Live Data - Last Updated: {formatTime(nowWib)} WIB</p>
+									<div
+										className={`inline-flex min-h-9 items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] transition ${
+											detailSWR.isValidating
+												? "border-sky-300/30 bg-sky-400/10 text-sky-100"
+												: "border-emerald-400/20 bg-emerald-500/10 text-emerald-100"
+										}`}
+									>
+										<span className={`size-2 rounded-full ${detailSWR.isValidating ? "animate-pulse bg-sky-300" : "bg-emerald-300"}`} />
+										{detailSWR.isValidating ? "Syncing board" : "Auto refresh 3s"}
+									</div>
+								</div>
 							)}
 
 							<section className="mb-6 grid gap-3 md:grid-cols-3 sm:gap-4">
@@ -972,7 +1033,11 @@ export default function Page() {
 												) : null}
 												<div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5 sm:gap-4">
 													{sessionCards.map((card) => (
-														<MemberCard card={card} key={card.id} />
+														<MemberCard
+															card={card}
+															key={card.id}
+															recentlyUpdated={recentlyUpdatedCardIds.includes(card.id)}
+														/>
 													))}
 												</div>
 											</section>
