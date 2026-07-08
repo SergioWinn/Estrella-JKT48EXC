@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { MemberCard, type MemberCardViewModel } from "@/src/components/MemberCard";
 
@@ -237,10 +237,6 @@ function compareEventsByRecency(a: EventDetail, b: EventDetail): number {
 	}
 
 	return getSortTimestamp(getEventCloseDate(b)) - getSortTimestamp(getEventCloseDate(a));
-}
-
-function getCardSignature(card: MemberCardViewModel): string {
-	return [card.status, card.soldCount, card.progressPercent, card.buttonLabel, card.badgeLabel ?? "", card.metaHtml].join("|");
 }
 
 function buildMemberMaps(members: MemberRecord[]): {
@@ -565,6 +561,7 @@ export default function Page() {
 	const activeEventOption =
 		eventOptions.find((option) => option.label === selectedEventLabel) ?? eventOptions[0] ?? null;
 	const activeEvent = activeEventOption?.data;
+	const [nowWib, setNowWib] = useState(() => getNowWib());
 
 	const activeEventCode = activeEvent?.code ?? null;
 	const detailSWR = useSWR<ApiEnvelope<EventDetail>>(
@@ -574,7 +571,6 @@ export default function Page() {
 	);
 
 	const currentEvent = detailSWR.data?.data ?? activeEvent;
-	const nowWib = getNowWib();
 	const { nicknameMap, photoMap } = useMemo(
 		() => buildMemberMaps(membersResponse?.data ?? []),
 		[membersResponse?.data],
@@ -599,9 +595,6 @@ export default function Page() {
 	const visibleSessions = isSearchMode
 		? dateKeys.flatMap((key) => groupedSessions.get(key) ?? [])
 		: groupedSessions.get(activeDate) ?? [];
-	const [recentlyUpdatedCardIds, setRecentlyUpdatedCardIds] = useState<string[]>([]);
-	const previousCardSignaturesRef = useRef<Map<string, string>>(new Map());
-	const previousViewKeyRef = useRef("");
 
 	const cards = (() => {
 		if (!currentEvent) {
@@ -648,36 +641,12 @@ export default function Page() {
 	})();
 
 	useEffect(() => {
-		const normalizedSearch = searchQuery.trim().toLowerCase();
-		const viewKey = [activeEventCode ?? "", activeDate, normalizedSearch, availableOnly ? "available" : "all"].join("|");
-		const currentSignatures = new Map(cards.map((card) => [card.id, getCardSignature(card)]));
+		const intervalId = window.setInterval(() => {
+			setNowWib(getNowWib());
+		}, 1000);
 
-		if (previousViewKeyRef.current !== viewKey) {
-			previousViewKeyRef.current = viewKey;
-			previousCardSignaturesRef.current = currentSignatures;
-			setRecentlyUpdatedCardIds([]);
-			return;
-		}
-
-		const previousSignatures = previousCardSignaturesRef.current;
-		const changedIds = cards
-			.filter((card) => previousSignatures.has(card.id) && previousSignatures.get(card.id) !== getCardSignature(card))
-			.map((card) => card.id);
-
-		previousCardSignaturesRef.current = currentSignatures;
-
-		if (!changedIds.length) {
-			return;
-		}
-
-		setRecentlyUpdatedCardIds(changedIds);
-
-		const timeoutId = window.setTimeout(() => {
-			setRecentlyUpdatedCardIds((current) => current.filter((id) => !changedIds.includes(id)));
-		}, 1400);
-
-		return () => window.clearTimeout(timeoutId);
-	}, [activeDate, activeEventCode, availableOnly, cards, searchQuery]);
+		return () => window.clearInterval(intervalId);
+	}, []);
 
 	const pageError = membersError ?? codesError ?? eventsError;
 	const detailError = detailSWR.error;
@@ -879,16 +848,12 @@ export default function Page() {
 								</div>
 							) : (
 								<div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-white/65">
-									<p className="m-0">🔄 Live Data - Last Updated: {formatTime(nowWib)} WIB</p>
+									<p className="m-0">🔄 Live data active</p>
 									<div
-										className={`inline-flex min-h-9 items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] transition ${
-											detailSWR.isValidating
-												? "border-sky-300/30 bg-sky-400/10 text-sky-100"
-												: "border-emerald-400/20 bg-emerald-500/10 text-emerald-100"
-										}`}
+										className="inline-flex min-h-9 items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-100"
 									>
-										<span className={`size-2 rounded-full ${detailSWR.isValidating ? "animate-pulse bg-sky-300" : "bg-emerald-300"}`} />
-										{detailSWR.isValidating ? "Syncing board" : "Auto refresh 3s"}
+										<span className="size-2 rounded-full bg-emerald-300" />
+										{formatDate(nowWib)} {formatTime(nowWib)} WIB
 									</div>
 								</div>
 							)}
@@ -1033,11 +998,7 @@ export default function Page() {
 												) : null}
 												<div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5 sm:gap-4">
 													{sessionCards.map((card) => (
-														<MemberCard
-															card={card}
-															key={card.id}
-															recentlyUpdated={recentlyUpdatedCardIds.includes(card.id)}
-														/>
+														<MemberCard card={card} key={card.id} />
 													))}
 												</div>
 											</section>

@@ -20,7 +20,6 @@ export interface MemberCardViewModel {
 
 interface MemberCardProps {
 	card: MemberCardViewModel;
-	recentlyUpdated?: boolean;
 }
 
 const statusClasses: Record<CardStatus, string> = {
@@ -34,34 +33,32 @@ const statusClasses: Record<CardStatus, string> = {
 		"relative flex min-h-full flex-col items-center overflow-hidden rounded-[1.15rem] border border-white/12 border-b-[5px] border-b-slate-500 bg-[linear-gradient(180deg,rgba(51,65,85,0.34),rgba(30,41,59,0.22))] px-3 py-4 text-center opacity-85 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-transform duration-200 sm:px-4 sm:py-5 lg:px-3 lg:py-3.5 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_18px_36px_rgba(0,0,0,0.28)]",
 };
 
-export function MemberCard({ card, recentlyUpdated = false }: MemberCardProps) {
+export function MemberCard({ card }: MemberCardProps) {
 	const isInactive = card.status === "sold" || card.status === "closed";
 	const isClosed = card.status === "closed";
-	const articleClassName = `${statusClasses[card.status]} ${
-		recentlyUpdated
-			? "ring-2 ring-emerald-300/70 shadow-[0_0_0_1px_rgba(110,231,183,0.28),0_0_28px_rgba(16,185,129,0.22)]"
-			: ""
-	}`;
+	const hasMetaBreak = /<br\s*\/?>/i.test(card.metaHtml);
+	const ribbonClassName =
+		card.badgeClassName === "member-card-badge-warn"
+			? "bg-amber-400 text-slate-950"
+			: "bg-emerald-400 text-slate-950";
 
 	const content = (
 		<>
-			<div className="mb-3 flex w-full min-w-0 items-start justify-between gap-2 sm:mb-4 lg:mb-2.5">
+			{card.badgeLabel ? (
 				<div
-					className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap pt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/60 sm:text-[11px] lg:text-[10px]"
+					className={`pointer-events-none absolute -right-8 top-3 z-10 w-24 rotate-45 select-none py-1 text-center text-[8px] font-extrabold uppercase tracking-[0.18em] shadow-[0_8px_18px_rgba(0,0,0,0.18)] sm:-right-7 sm:w-24 lg:-right-8 lg:top-2.5 lg:w-[5.5rem] ${ribbonClassName}`}
+				>
+					{card.badgeLabel}
+				</div>
+			) : null}
+			<div className="mb-3 w-full pt-1 text-center sm:mb-4 lg:mb-2.5">
+				<div
+					className={hasMetaBreak
+						? "w-full text-[10px] font-semibold uppercase leading-[1.35] tracking-[0.16em] text-white/60 sm:text-[11px] lg:text-[10px]"
+						: "w-full overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60 sm:text-[11px] lg:text-[10px]"}
 					dangerouslySetInnerHTML={{ __html: card.metaHtml }}
 					title={card.metaHtml.replace(/<br\s*\/?>/gi, " ").replace(/&nbsp;/g, " ")}
 				/>
-				{card.badgeLabel ? (
-					<div
-						className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-extrabold tracking-[0.12em] shadow-[0_2px_5px_rgba(0,0,0,0.12)] lg:px-2 lg:py-[3px] lg:text-[8px] ${
-							card.badgeClassName === "member-card-badge-warn"
-								? "bg-amber-400 text-slate-950"
-								: "bg-emerald-500 text-white"
-						}`}
-					>
-						{card.badgeLabel}
-					</div>
-				) : null}
 			</div>
 			<div className="relative mb-3 size-16 overflow-hidden rounded-full border-2 border-white/15 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.15)] sm:mb-4 sm:size-[4.5rem] lg:mb-2.5 lg:size-[3.85rem]">
 				{/* eslint-disable-next-line @next/next/no-img-element */}
@@ -138,5 +135,5 @@ export function MemberCard({ card, recentlyUpdated = false }: MemberCardProps) {
 		</>
 	);
 
-	return <article className={articleClassName}>{content}</article>;
+	return <article className={statusClasses[card.status]}>{content}</article>;
 }
