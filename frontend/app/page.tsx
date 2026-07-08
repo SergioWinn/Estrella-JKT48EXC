@@ -734,7 +734,7 @@ export default function Page() {
 				<>
 					<section className="mb-6 grid gap-3 rounded-[1.75rem] border border-white/10 bg-white/6 p-3 backdrop-blur sm:gap-4 sm:p-4 md:grid-cols-2 xl:grid-cols-[1.05fr_2.25fr_1.15fr_auto]">
 						<label className="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
-							<span>🎯 Select Category:</span>
+							<span>🎯 Category</span>
 							<select
 								className="min-h-11 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 pr-10 text-sm outline-none sm:text-base"
 								onChange={(event) => {
@@ -753,7 +753,7 @@ export default function Page() {
 						</label>
 
 						<label className="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
-							<span>📌 Select JKT48 Event:</span>
+							<span>📌 Event</span>
 							<select
 								className="min-h-11 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 pr-10 text-sm outline-none sm:text-base"
 								onChange={(event) => {
@@ -788,8 +788,8 @@ export default function Page() {
 								●
 							</div>
 							<div className="min-w-0 flex-1">
-								<div className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300/75">Lane Filter</div>
-								<div className="truncate text-sm text-white">Show available lanes only</div>
+								<div className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300/75">Available Only</div>
+								<div className="truncate text-sm text-white">Hide sold out lanes</div>
 							</div>
 							<span className="relative ml-auto inline-flex shrink-0 items-center">
 								<input
@@ -835,7 +835,7 @@ export default function Page() {
 								</div>
 							) : (
 								<div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-white/65">
-									<p className="m-0">🔄 Live data active</p>
+									<p className="m-0">🔄 Live now</p>
 									<div
 										className="inline-flex min-h-9 items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-100"
 									>
@@ -922,7 +922,7 @@ export default function Page() {
 							{!isSearchMode && dateKeys.length ? (
 								<section className="mb-4">
 									<div className="mb-3 text-sm font-semibold text-white/80">
-										📅 Event Date: {dateKeys.length === 1 ? dateKeys[0] : ""}
+										📅 Date: {dateKeys.length === 1 ? dateKeys[0] : ""}
 									</div>
 									{dateKeys.length > 1 ? (
 										<div className="flex flex-wrap gap-2">
