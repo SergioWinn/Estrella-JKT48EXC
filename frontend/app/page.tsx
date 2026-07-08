@@ -881,9 +881,7 @@ export default function Page() {
 									</div>
 									<div className="mt-4 flex items-center gap-3">
 										<div className="h-px flex-1 bg-emerald-400/65" />
-										<div className="text-[10px] font-medium text-white/45">
-											{Math.round((metrics.remaining / Math.max(metrics.totalTickets, 1)) * 100)}% left
-										</div>
+										<div className="text-[10px] font-medium text-white/45">ready to buy</div>
 									</div>
 								</div>
 								<div className="rounded-[1.6rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
@@ -902,7 +900,7 @@ export default function Page() {
 									</div>
 									<div className="mt-4 flex items-center gap-3">
 										<div className="h-px flex-1 bg-amber-400/65" />
-										<div className="text-[10px] font-medium text-white/45">{(100 - metrics.soldRate).toFixed(1)}% not sold</div>
+										<div className="text-[10px] font-medium text-white/45">tickets not sold yet</div>
 									</div>
 								</div>
 							</section>
