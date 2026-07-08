@@ -75,6 +75,8 @@ interface EventMetrics {
 	totalTickets: number;
 }
 
+type ThemeMode = "dark" | "light";
+
 class ApiError extends Error {
 	statusCode?: number;
 
@@ -86,6 +88,7 @@ class ApiError extends Error {
 }
 
 const API_BASE_URL = "https://api.estrella19.workers.dev";
+const THEME_STORAGE_KEY = "gem-theme";
 
 const FALLBACK_CODES = ["EX783D", "EX9A4A", "EXCD2C", "EXCB75"];
 const FALLBACK_IMAGE =
@@ -421,7 +424,7 @@ function buildCard(args: {
 	let badgeLabel: string | null = "OPEN";
 	let badgeClassName = "member-card-badge-avail";
 	let progressPercent = totalCapacity > 0 ? (soldCount / totalCapacity) * 100 : 0;
-	let progressColor = "#10B981";
+	let progressColor = "var(--available)";
 	let clickable = true;
 
 	if (isEventClosed || !isBeforeDeadline) {
@@ -429,23 +432,23 @@ function buildCard(args: {
 		buttonLabel = "CLOSED";
 		badgeLabel = null;
 		progressPercent = 100;
-		progressColor = "#555555";
+		progressColor = "var(--closed)";
 		clickable = false;
 	} else if (availableQuota <= 0) {
 		status = "sold";
 		buttonLabel = "SOLD&nbsp;OUT";
 		badgeLabel = null;
 		progressPercent = 100;
-		progressColor = "#EF4444";
+		progressColor = "var(--sold)";
 		clickable = false;
 	} else if (availableQuota < warnLimit) {
 		status = "warn";
 		buttonLabel = `${availableQuota}&nbsp;LEFT`;
 		badgeLabel = "LOW";
 		badgeClassName = "member-card-badge-warn";
-		progressColor = "#FBBF24";
+		progressColor = "var(--warn)";
 	} else {
-		progressColor = "#10B981";
+		progressColor = "var(--available)";
 	}
 
 	return {
@@ -562,6 +565,13 @@ export default function Page() {
 		eventOptions.find((option) => option.label === selectedEventLabel) ?? eventOptions[0] ?? null;
 	const activeEvent = activeEventOption?.data;
 	const [nowWib, setNowWib] = useState(() => getNowWib());
+	const [theme, setTheme] = useState<ThemeMode>(() => {
+		if (typeof document !== "undefined" && document.documentElement.dataset.theme === "light") {
+			return "light";
+		}
+
+		return "dark";
+	});
 
 	const activeEventCode = activeEvent?.code ?? null;
 	const detailSWR = useSWR<ApiEnvelope<EventDetail>>(
@@ -648,6 +658,12 @@ export default function Page() {
 		return () => window.clearInterval(intervalId);
 	}, []);
 
+	function updateTheme(nextTheme: ThemeMode) {
+		setTheme(nextTheme);
+		document.documentElement.dataset.theme = nextTheme;
+		window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+	}
+
 	const pageError = membersError ?? codesError ?? eventsError;
 	const detailError = detailSWR.error;
 	const isLoading = membersLoading || codesLoading || eventsLoading;
@@ -661,15 +677,15 @@ export default function Page() {
 				: null;
 
 	return (
-		<main className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8 2xl:px-10">
-			<header className="mb-6 border-b border-white/10 pb-4 text-center sm:mb-8 sm:pb-5">
-				<h1 className="m-0 text-[2rem] font-extrabold tracking-[-0.04em] sm:text-[2.65rem] lg:text-[3.25rem]">GLOBAL EXCLUSIVE MONITOR</h1>
-				<p className="mt-2 text-sm font-semibold text-white/70 sm:text-base lg:text-lg">Live Tracker for All JKT48 Exclusive Events</p>
+		<main className="mx-auto w-full max-w-[1680px] px-3 py-4 text-[var(--text)] sm:px-5 sm:py-6 lg:px-8 lg:py-8 2xl:px-10">
+			<header className="mb-6 border-b border-[color:var(--border)] pb-4 text-center sm:mb-8 sm:pb-5">
+				<h1 className="m-0 text-[2rem] font-extrabold tracking-[-0.04em] text-[var(--text)] sm:text-[2.65rem] lg:text-[3.25rem]">GLOBAL EXCLUSIVE MONITOR</h1>
+				<p className="mt-2 text-sm font-semibold text-[var(--text-muted)] sm:text-base lg:text-lg">Live Tracker for All JKT48 Exclusive Events</p>
 				<div className="mt-4 flex flex-col items-center justify-center gap-3 text-sm sm:flex-row">
-					<span>
+					<span className="text-[var(--text-muted)]">
 						Developed by{" "}
 						<a
-							className="font-bold text-emerald-400 hover:underline"
+							className="font-bold text-[var(--accent)] hover:underline"
 							href="https://x.com/estrellawin19"
 							rel="noreferrer"
 							target="_blank"
@@ -678,7 +694,7 @@ export default function Page() {
 						</a>
 					</span>
 					<a
-						className="inline-flex min-h-11 items-center rounded-full bg-rose-500 px-4 py-2 text-xs font-bold text-white no-underline transition hover:-translate-y-px hover:bg-rose-600"
+						className="inline-flex min-h-11 items-center rounded-full bg-[var(--support)] px-4 py-2 text-xs font-bold text-[var(--support-text)] no-underline transition hover:-translate-y-px hover:bg-[var(--support-hover)]"
 						href="https://tako.id/Sportagame19Win"
 						rel="noreferrer"
 						target="_blank"
@@ -686,9 +702,39 @@ export default function Page() {
 						🐙 Support via Tako
 					</a>
 				</div>
-				<div className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-emerald-400 sm:text-xs">
-					<span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-					LIVE MONITORING
+				<div className="mt-4 flex flex-col items-center justify-center gap-3 sm:flex-row">
+					<div className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-[var(--accent)] sm:text-xs">
+						<span className="h-2 w-2 animate-pulse rounded-full bg-[var(--accent)]" />
+						LIVE MONITORING
+					</div>
+					<div className="inline-flex items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-1 shadow-[inset_0_1px_0_var(--highlight)]">
+						<button
+							aria-label="Switch to dark theme"
+							aria-pressed={theme === "dark"}
+							className={`inline-flex size-9 items-center justify-center rounded-full text-base transition ${
+								theme === "dark"
+									? "bg-[var(--accent)] text-[var(--ribbon-available-text)] shadow-[0_6px_18px_rgba(88,66,146,0.24)]"
+									: "text-[var(--text-faint)] hover:text-[var(--text)]"
+							}`}
+							onClick={() => updateTheme("dark")}
+							type="button"
+						>
+							☾
+						</button>
+						<button
+							aria-label="Switch to light theme"
+							aria-pressed={theme === "light"}
+							className={`inline-flex size-9 items-center justify-center rounded-full text-base transition ${
+								theme === "light"
+									? "bg-[var(--surface-strong)] text-[var(--accent)] shadow-[0_6px_18px_rgba(88,66,146,0.16)]"
+									: "text-[var(--text-faint)] hover:text-[var(--text)]"
+							}`}
+							onClick={() => updateTheme("light")}
+							type="button"
+						>
+							☀
+						</button>
+					</div>
 				</div>
 			</header>
 
@@ -696,8 +742,8 @@ export default function Page() {
 				<div
 					className={`mb-4 rounded-2xl p-4 text-sm ${
 						workerWaitingRoom
-							? "border border-amber-400/25 bg-amber-500/10 text-amber-100"
-							: "border border-red-400/25 bg-red-500/10 text-red-100"
+							? "border border-[var(--warn)] bg-[color:var(--warn-soft)] text-[var(--warn-text)]"
+							: "border border-[var(--sold)] bg-[color:var(--sold-soft)] text-[var(--sold-text)]"
 					}`}
 				>
 					{workerWaitingRoom ? "⚠️ " : ""}
@@ -707,16 +753,16 @@ export default function Page() {
 
 			{isLoading ? (
 				<section className="mb-6 space-y-4">
-					<div className="h-28 animate-pulse rounded-3xl border border-white/10 bg-white/6" />
+					<div className="h-28 animate-pulse rounded-3xl border border-[color:var(--border)] bg-[color:var(--surface)]" />
 					<div className="grid gap-4 md:grid-cols-3">
-						<div className="h-24 animate-pulse rounded-2xl border border-white/10 bg-white/6" />
-						<div className="h-24 animate-pulse rounded-2xl border border-white/10 bg-white/6" />
-						<div className="h-24 animate-pulse rounded-2xl border border-white/10 bg-white/6" />
+						<div className="h-24 animate-pulse rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)]" />
+						<div className="h-24 animate-pulse rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)]" />
+						<div className="h-24 animate-pulse rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)]" />
 					</div>
 					<div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5 sm:gap-4">
 						{Array.from({ length: 6 }).map((_, index) => (
 							<div
-								className="h-64 animate-pulse rounded-2xl border border-white/10 bg-white/6"
+								className="h-64 animate-pulse rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)]"
 								key={index}
 							/>
 						))}
@@ -725,18 +771,18 @@ export default function Page() {
 			) : null}
 
 			{!isLoading && !categoryKeys.length ? (
-				<div className="rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-100">
+				<div className="rounded-2xl border border-[var(--sold)] bg-[color:var(--sold-soft)] p-4 text-sm text-[var(--sold-text)]">
 					No active Exclusive events found or failed to fetch data.
 				</div>
 			) : null}
 
 			{categoryKeys.length ? (
 				<>
-					<section className="mb-6 grid gap-3 rounded-[1.75rem] border border-white/10 bg-white/6 p-3 backdrop-blur sm:gap-4 sm:p-4 md:grid-cols-2 xl:grid-cols-[1.05fr_2.25fr_1.15fr_auto]">
+					<section className="mb-6 grid gap-3 rounded-[1.75rem] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 backdrop-blur sm:gap-4 sm:p-4 md:grid-cols-2 xl:grid-cols-[1.05fr_2.25fr_1.15fr_auto]">
 						<label className="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
 							<span>🎯 Category</span>
 							<select
-								className="min-h-11 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 pr-10 text-sm outline-none sm:text-base"
+								className="min-h-11 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-[color:var(--border)] bg-[color:var(--input-bg)] px-3 py-2 pr-10 text-sm text-[var(--text)] outline-none sm:text-base"
 								onChange={(event) => {
 									setSelectedCategory(event.target.value);
 									setSelectedEventLabel("");
@@ -755,7 +801,7 @@ export default function Page() {
 						<label className="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
 							<span>📌 Event</span>
 							<select
-								className="min-h-11 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 pr-10 text-sm outline-none sm:text-base"
+								className="min-h-11 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-[color:var(--border)] bg-[color:var(--input-bg)] px-3 py-2 pr-10 text-sm text-[var(--text)] outline-none sm:text-base"
 								onChange={(event) => {
 									setSelectedEventLabel(event.target.value);
 									setSelectedDate("");
@@ -773,7 +819,7 @@ export default function Page() {
 						<label className="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
 							<span className="block truncate whitespace-nowrap">🔍 Search member...</span>
 							<input
-								className="min-h-11 w-full min-w-0 rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 text-sm outline-none sm:text-base"
+								className="min-h-11 w-full min-w-0 rounded-xl border border-[color:var(--border)] bg-[color:var(--input-bg)] px-3 py-2 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-faint)] sm:text-base"
 								onChange={(event) => {
 									setSearchQuery(event.target.value);
 									setSelectedDate("");
@@ -783,13 +829,13 @@ export default function Page() {
 							/>
 						</label>
 
-						<label className="mt-1 flex min-h-11 min-w-0 items-center gap-3 rounded-full border border-white/12 bg-slate-950/55 px-3 py-2.5 text-sm font-semibold sm:justify-self-end sm:text-[0.95rem] xl:min-w-[280px]">
-							<div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-emerald-400/18 bg-emerald-500/10 text-sm text-emerald-300">
+						<label className="mt-1 flex min-h-11 min-w-0 items-center gap-3 rounded-full border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-3 py-2.5 text-sm font-semibold sm:justify-self-end sm:text-[0.95rem] xl:min-w-[280px]">
+							<div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] text-sm text-[var(--accent)]">
 								●
 							</div>
 							<div className="min-w-0 flex-1">
-								<div className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300/75">Available Only</div>
-								<div className="truncate text-sm text-white">Hide sold out lanes</div>
+								<div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">Available Only</div>
+								<div className="truncate text-sm text-[var(--text)]">Hide sold out lanes</div>
 							</div>
 							<span className="relative ml-auto inline-flex shrink-0 items-center">
 								<input
@@ -798,18 +844,18 @@ export default function Page() {
 									onChange={(event) => setAvailableOnly(event.target.checked)}
 									type="checkbox"
 								/>
-								<span className="flex items-center gap-3 rounded-full border border-white/10 bg-slate-900/95 px-2 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white/70 peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-300/80 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-slate-950">
-									<span className={`transition-colors ${availableOnly ? "text-emerald-200" : "text-white/45"}`}>Off</span>
+								<span className="flex items-center gap-3 rounded-full border border-[color:var(--border)] bg-[color:var(--surface-strong)] px-2 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--accent)] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[var(--bg-elevated)]">
+									<span className={`transition-colors ${availableOnly ? "text-[var(--text-faint)]" : "text-[var(--accent)]"}`}>Off</span>
 									<span className={`relative h-7 w-12 rounded-full border transition-colors ${
-										availableOnly ? "border-emerald-400/30 bg-emerald-500/25" : "border-white/12 bg-slate-800"
+										availableOnly ? "border-[color:var(--accent-border)] bg-[color:var(--accent-soft)]" : "border-[color:var(--border)] bg-[color:var(--surface)]"
 									}`}>
 										<span
 											className={`absolute top-1/2 size-5 -translate-y-1/2 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.25)] transition-all duration-200 ${
-												availableOnly ? "left-[1.45rem] bg-emerald-200" : "left-1"
+												availableOnly ? "left-[1.45rem] bg-[var(--accent)]" : "left-1 bg-[var(--text)]"
 											}`}
 										/>
 									</span>
-									<span className={`transition-colors ${availableOnly ? "text-white" : "text-white/45"}`}>On</span>
+									<span className={`transition-colors ${availableOnly ? "text-[var(--accent)]" : "text-[var(--text-faint)]"}`}>On</span>
 								</span>
 							</span>
 						</label>
@@ -818,118 +864,118 @@ export default function Page() {
 					{currentEvent ? (
 						<>
 							<section className="mb-3">
-								<h2 className="text-2xl font-bold tracking-[-0.03em] sm:text-[2rem]">{currentEvent.title ?? "Event"}</h2>
-								<p className="mt-1 text-sm text-white/70 sm:text-[0.95rem]">
+								<h2 className="text-2xl font-bold tracking-[-0.03em] text-[var(--text)] sm:text-[2rem]">{currentEvent.title ?? "Event"}</h2>
+								<p className="mt-1 text-sm text-[var(--text-muted)] sm:text-[0.95rem]">
 									<strong>Category:</strong> {(currentEvent.category ?? "-").replaceAll("_", " ")} |{" "}
 									<strong>Price:</strong> IDR {(currentEvent.default_price ?? 0).toLocaleString("id-ID")}
 								</p>
 							</section>
 
 							{workerWaitingRoom ? (
-								<div className="mb-4 rounded-2xl border border-amber-400/25 bg-amber-500/10 p-4 text-sm text-amber-100">
+								<div className="mb-4 rounded-2xl border border-[var(--warn)] bg-[color:var(--warn-soft)] p-4 text-sm text-[var(--warn-text)]">
 									⚠️ Worker upstream is currently in Cloudflare Waiting Room / rate-limited. Showing last known good data in memory.
 								</div>
 							) : detailError ? (
-								<div className="mb-4 rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-100">
+								<div className="mb-4 rounded-2xl border border-[var(--sold)] bg-[color:var(--sold-soft)] p-4 text-sm text-[var(--sold-text)]">
 									Failed to refresh worker data. Showing last known good data in memory.
 								</div>
 							) : (
-								<div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-white/65">
+								<div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)]">
 									<p className="m-0">🔄 Live now</p>
 									<div
-										className="inline-flex min-h-9 items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-100"
+										className="inline-flex min-h-9 items-center gap-2 rounded-full border border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent-text)]"
 									>
-										<span className="size-2 rounded-full bg-emerald-300" />
+										<span className="size-2 rounded-full bg-[var(--accent)]" />
 										{formatDate(nowWib)} {formatTime(nowWib)} WIB
 									</div>
 								</div>
 							)}
 
 							<section className="mb-6 grid gap-3 md:grid-cols-3 sm:gap-4">
-								<div className="rounded-[1.6rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+								<div className="rounded-[1.6rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-elevated))] p-4 shadow-[inset_0_1px_0_var(--highlight)]">
 									<div className="flex items-start justify-between gap-3">
 										<div>
-											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/40">Total Tickets</div>
-											<div className="mt-1 text-xs text-white/55">All tickets for this event</div>
+											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">Total Tickets</div>
+											<div className="mt-1 text-xs text-[var(--text-muted)]">All tickets for this event</div>
 										</div>
-										<div className="text-xs text-rose-300">🎟️</div>
+										<div className="text-xs text-[var(--sold)]">🎟️</div>
 									</div>
 									<div className="mt-5 flex items-end justify-between gap-3">
-										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] tabular-nums sm:text-[2.3rem]">
+										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] text-[var(--text)] tabular-nums sm:text-[2.3rem]">
 											{metrics.totalTickets.toLocaleString("id-ID")}
 										</div>
-										<div className="pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/35">Event total</div>
+										<div className="pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-faint)]">Event total</div>
 									</div>
 									<div className="mt-4 flex items-center gap-3">
-										<div className="h-px flex-1 bg-rose-400/60" />
-										<div className="text-[10px] font-medium text-white/45">all sessions</div>
+										<div className="h-px flex-1 bg-[var(--sold)]" />
+										<div className="text-[10px] font-medium text-[var(--text-faint)]">all sessions</div>
 									</div>
 								</div>
-								<div className="rounded-[1.6rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+								<div className="rounded-[1.6rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-elevated))] p-4 shadow-[inset_0_1px_0_var(--highlight)]">
 									<div className="flex items-start justify-between gap-3">
 										<div>
-											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/40">Tickets Left</div>
-											<div className="mt-1 text-xs text-white/55">Tickets you can still buy</div>
+											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">Tickets Left</div>
+											<div className="mt-1 text-xs text-[var(--text-muted)]">Tickets you can still buy</div>
 										</div>
-										<div className="text-xs text-emerald-300">📦</div>
+										<div className="text-xs text-[var(--available)]">📦</div>
 									</div>
 									<div className="mt-5 flex items-end justify-between gap-3">
-										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] tabular-nums sm:text-[2.3rem]">
+										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] text-[var(--text)] tabular-nums sm:text-[2.3rem]">
 											{metrics.remaining.toLocaleString("id-ID")}
 										</div>
-										<div className="pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300/70">still open</div>
+										<div className="pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--available)]">still open</div>
 									</div>
 									<div className="mt-4 flex items-center gap-3">
-										<div className="h-px flex-1 bg-emerald-400/65" />
-										<div className="text-[10px] font-medium text-white/45">ready to buy</div>
+										<div className="h-px flex-1 bg-[var(--available)]" />
+										<div className="text-[10px] font-medium text-[var(--text-faint)]">ready to buy</div>
 									</div>
 								</div>
-								<div className="rounded-[1.6rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+								<div className="rounded-[1.6rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-elevated))] p-4 shadow-[inset_0_1px_0_var(--highlight)]">
 									<div className="flex items-start justify-between gap-3">
 										<div>
-											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/40">Sold Rate</div>
-											<div className="mt-1 text-xs text-white/55">How many tickets are sold</div>
+											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">Sold Rate</div>
+											<div className="mt-1 text-xs text-[var(--text-muted)]">How many tickets are sold</div>
 										</div>
-										<div className="text-xs text-amber-300">🔥</div>
+										<div className="text-xs text-[var(--warn)]">🔥</div>
 									</div>
 									<div className="mt-5 flex items-end justify-between gap-3">
-										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] tabular-nums sm:text-[2.3rem]">
+										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] text-[var(--text)] tabular-nums sm:text-[2.3rem]">
 											{metrics.soldRate.toFixed(1)}%
 										</div>
-										<div className="pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300/70">already sold</div>
+										<div className="pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--warn)]">already sold</div>
 									</div>
 									<div className="mt-4 flex items-center gap-3">
-										<div className="h-px flex-1 bg-amber-400/65" />
-										<div className="text-[10px] font-medium text-white/45">tickets not sold yet</div>
+										<div className="h-px flex-1 bg-[var(--warn)]" />
+										<div className="text-[10px] font-medium text-[var(--text-faint)]">tickets not sold yet</div>
 									</div>
 								</div>
 							</section>
 
 							{availableOnly && cards.length ? (
-								<div className="mb-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-50">
+								<div className="mb-4 rounded-2xl border border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] p-4 text-sm text-[var(--accent-text)]">
 									Showing only lanes with tickets still available.
 								</div>
 							) : null}
 
 							{isSearchMode && cards.length ? (
-								<div className="mb-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-50">
+								<div className="mb-4 rounded-2xl border border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] p-4 text-sm text-[var(--accent-text)]">
 									🔎 Showing all schedules for <strong>{searchQuery.trim().toUpperCase()}</strong> across dates.
 								</div>
 							) : null}
 
 							{!isSearchMode && dateKeys.length ? (
 								<section className="mb-4">
-									<div className="mb-3 text-sm font-semibold text-white/80">
+									<div className="mb-3 text-sm font-semibold text-[var(--text-muted)]">
 										📅 Date: {dateKeys.length === 1 ? dateKeys[0] : ""}
 									</div>
 									{dateKeys.length > 1 ? (
 										<div className="flex flex-wrap gap-2">
 											{dateKeys.map((dateKey) => (
 												<button
-													className={`min-h-11 rounded-full border px-4 py-2 text-sm font-semibold transition hover:bg-white/10 ${
+													className={`min-h-11 rounded-full border px-4 py-2 text-sm font-semibold transition hover:bg-[color:var(--surface-soft)] ${
 														dateKey === activeDate
-															? "border-emerald-400 bg-emerald-500/20 text-emerald-100"
-															: "border-white/12 bg-white/6 text-white/70"
+															? "border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] text-[var(--accent-text)]"
+															: "border-[color:var(--border)] bg-[color:var(--surface)] text-[var(--text-muted)]"
 													}`}
 													key={dateKey}
 													onClick={() => setSelectedDate(dateKey)}
@@ -944,7 +990,7 @@ export default function Page() {
 							) : null}
 
 							{!cards.length ? (
-								<div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+								<div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-soft)] p-4 text-sm text-[var(--text-muted)]">
 									{isSearchMode
 										? `Member '${searchQuery.trim()}' not found in this event.`
 										: "🟢 All clear! No active tickets or available sessions right now."}
@@ -976,9 +1022,9 @@ export default function Page() {
 										return (
 											<section className="mb-6 sm:mb-7" key={`${sessionLabel}-${session.startTime}`}>
 												{!isSearchMode ? (
-													<h3 className="mb-3 mt-1 text-sm font-semibold sm:mb-4 sm:text-base lg:text-lg">
+													<h3 className="mb-3 mt-1 text-sm font-semibold text-[var(--text)] sm:mb-4 sm:text-base lg:text-lg">
 														{sessionLabel}
-														<span className="ml-1 text-[11px] font-medium opacity-50 sm:text-[13px]">{timeInfo}</span>
+														<span className="ml-1 text-[11px] font-medium text-[var(--text-faint)] sm:text-[13px]">{timeInfo}</span>
 													</h3>
 												) : null}
 												<div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5 sm:gap-4">
