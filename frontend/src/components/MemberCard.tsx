@@ -23,55 +23,84 @@ interface MemberCardProps {
 }
 
 const statusClasses: Record<CardStatus, string> = {
-	avail: "member-card member-card-avail",
-	warn: "member-card member-card-warn",
-	sold: "member-card member-card-sold",
-	closed: "member-card member-card-closed",
+	avail:
+		"relative flex min-h-full flex-col items-center overflow-hidden rounded-[1.15rem] border border-white/12 border-b-[5px] border-b-emerald-500 bg-[linear-gradient(180deg,rgba(15,23,42,0.86),rgba(15,23,42,0.68))] px-3 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-transform duration-200 sm:px-4 sm:py-5 supports-[hover:hover]:hover:-translate-y-1 supports-[hover:hover]:hover:border-white/20 supports-[hover:hover]:hover:shadow-[0_18px_36px_rgba(0,0,0,0.28)]",
+	warn:
+		"relative flex min-h-full flex-col items-center overflow-hidden rounded-[1.15rem] border border-white/12 border-b-[5px] border-b-amber-400 bg-[linear-gradient(180deg,rgba(15,23,42,0.9),rgba(15,23,42,0.72))] px-3 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-transform duration-200 animate-[card-glow_2s_ease-in-out_infinite] sm:px-4 sm:py-5 supports-[hover:hover]:hover:-translate-y-1 supports-[hover:hover]:hover:border-white/20 supports-[hover:hover]:hover:shadow-[0_18px_36px_rgba(0,0,0,0.28)]",
+	sold:
+		"relative flex min-h-full flex-col items-center overflow-hidden rounded-[1.15rem] border border-white/12 border-b-[5px] border-b-rose-500 bg-[linear-gradient(180deg,rgba(15,23,42,0.8),rgba(15,23,42,0.62))] px-3 py-4 text-center opacity-90 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-transform duration-200 sm:px-4 sm:py-5 supports-[hover:hover]:hover:-translate-y-1 supports-[hover:hover]:hover:border-white/20 supports-[hover:hover]:hover:shadow-[0_18px_36px_rgba(0,0,0,0.28)]",
+	closed:
+		"relative flex min-h-full flex-col items-center overflow-hidden rounded-[1.15rem] border border-white/12 border-b-[5px] border-b-slate-500 bg-[linear-gradient(180deg,rgba(51,65,85,0.34),rgba(30,41,59,0.22))] px-3 py-4 text-center opacity-85 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-transform duration-200 sm:px-4 sm:py-5 supports-[hover:hover]:hover:-translate-y-1 supports-[hover:hover]:hover:border-white/20 supports-[hover:hover]:hover:shadow-[0_18px_36px_rgba(0,0,0,0.28)]",
 };
 
 export function MemberCard({ card }: MemberCardProps) {
+	const isInactive = card.status === "sold" || card.status === "closed";
+	const isClosed = card.status === "closed";
+
 	const content = (
 		<>
 			{card.badgeLabel ? (
-				<div className={`member-card-badge ${card.badgeClassName}`}>{card.badgeLabel}</div>
+				<div
+					className={`absolute right-3 top-3 z-10 rounded-full px-2 py-1 text-[9px] font-extrabold tracking-[0.12em] shadow-[0_2px_5px_rgba(0,0,0,0.12)] sm:right-4 sm:top-4 ${
+						card.badgeClassName === "member-card-badge-warn"
+							? "bg-amber-400 text-slate-950"
+							: "bg-emerald-500 text-white"
+					}`}
+				>
+					{card.badgeLabel}
+				</div>
 			) : null}
 			<div
-				className="member-card-meta"
+				className="mb-2 w-full overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.18em] text-white/60 sm:mb-2.5 sm:text-[11px] lg:text-xs"
 				dangerouslySetInnerHTML={{ __html: card.metaHtml }}
 				title={card.metaHtml.replace(/<br\s*\/?>/gi, " ").replace(/&nbsp;/g, " ")}
 			/>
-			<div className="member-card-photo-wrap">
+			<div className="relative mb-3 size-16 overflow-hidden rounded-full border-2 border-white/15 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.15)] sm:mb-4 sm:size-[4.5rem]">
 				{/* eslint-disable-next-line @next/next/no-img-element */}
 				<img
 					alt={`${card.memberName} JKT48 photo`}
-					className="member-card-photo"
+					className={`block size-full object-cover object-[center_5%] ${
+						card.status === "closed"
+							? "grayscale contrast-90"
+							: card.status === "sold"
+								? "saturate-50"
+								: ""
+					}`}
 					height={74}
 					loading="lazy"
 					src={card.photoUrl}
 					width={74}
 				/>
+				{isInactive ? (
+					<div className={`absolute inset-0 ${isClosed ? "bg-slate-900/45" : "bg-white/30"}`} />
+				) : null}
 			</div>
-			<div className="member-card-name">{card.memberName}</div>
+			<div className="mb-2 line-clamp-2 min-h-[2.8rem] w-full text-sm font-bold leading-tight text-white sm:mb-3 sm:text-base lg:text-[1.05rem]">
+				{card.memberName}
+			</div>
 			<div className="mt-auto w-full">
-				<div className="member-card-stats">
+				<div className="mb-2 flex w-full justify-center px-1 text-[11px] font-medium text-white/85 sm:text-xs">
 					<span>
-						Sold:&nbsp;<b>{card.soldCount}</b>
+						Sold:&nbsp;
+						<b className={card.status === "avail" || card.status === "warn" ? "font-extrabold text-sky-300" : "font-extrabold text-white"}>
+							{card.soldCount}
+						</b>
 					</span>
 				</div>
 				<div
 					aria-label={card.buttonLabel.replace(/&nbsp;/g, " ")}
-					className="member-card-progress"
+					className="relative flex min-h-11 w-full items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-[#34363b] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
 					role="img"
 				>
 					<div
-						className="member-card-progress-fill"
+						className={`absolute inset-y-0 left-0 transition-[width] duration-500 ${isInactive ? "rounded-xl" : "rounded-l-xl"}`}
 						style={{
 							backgroundColor: card.progressColor,
 							width: `${card.progressPercent}%`,
 						}}
 					/>
 					<div
-						className="member-card-progress-text"
+						className="relative z-10 flex min-h-11 w-full min-w-0 items-center justify-center px-2 text-[11px] font-extrabold tracking-[0.12em] text-white text-shadow-[0_1px_3px_rgba(0,0,0,0.5)] sm:text-xs"
 						dangerouslySetInnerHTML={{ __html: card.buttonLabel }}
 					/>
 				</div>
@@ -86,7 +115,7 @@ export function MemberCard({ card }: MemberCardProps) {
 	return (
 		<article className={statusClasses[card.status]}>
 			<a
-				className="flex h-full w-full flex-col items-center text-inherit no-underline"
+				className="flex h-full w-full flex-col items-center text-inherit no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
 				href={card.purchaseLink}
 				rel="noreferrer"
 				target="_blank"

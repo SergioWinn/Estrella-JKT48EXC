@@ -653,10 +653,10 @@ export default function Page() {
 				: null;
 
 	return (
-		<main className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6">
-			<header className="mb-8 border-b border-white/10 pb-5 text-center">
-				<h1 className="m-0 text-4xl font-extrabold tracking-tight sm:text-5xl">GLOBAL EXCLUSIVE MONITOR</h1>
-				<p className="mt-2 text-lg font-semibold text-white/70">Live Tracker for All JKT48 Exclusive Events</p>
+		<main className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8 2xl:px-10">
+			<header className="mb-6 border-b border-white/10 pb-4 text-center sm:mb-8 sm:pb-5">
+				<h1 className="m-0 text-[2rem] font-extrabold tracking-[-0.04em] sm:text-[2.65rem] lg:text-[3.25rem]">GLOBAL EXCLUSIVE MONITOR</h1>
+				<p className="mt-2 text-sm font-semibold text-white/70 sm:text-base lg:text-lg">Live Tracker for All JKT48 Exclusive Events</p>
 				<div className="mt-4 flex flex-col items-center justify-center gap-3 text-sm sm:flex-row">
 					<span>
 						Developed by{" "}
@@ -670,7 +670,7 @@ export default function Page() {
 						</a>
 					</span>
 					<a
-						className="inline-flex items-center rounded-full bg-rose-500 px-3 py-1 text-xs font-bold text-white no-underline transition hover:-translate-y-px hover:bg-rose-600"
+						className="inline-flex min-h-11 items-center rounded-full bg-rose-500 px-4 py-2 text-xs font-bold text-white no-underline transition supports-[hover:hover]:hover:-translate-y-px supports-[hover:hover]:hover:bg-rose-600"
 						href="https://tako.id/Sportagame19Win"
 						rel="noreferrer"
 						target="_blank"
@@ -678,7 +678,7 @@ export default function Page() {
 						🐙 Support via Tako
 					</a>
 				</div>
-				<div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-1.5 text-xs font-bold text-emerald-400">
+				<div className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-emerald-400 sm:text-xs">
 					<span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
 					LIVE MONITORING
 				</div>
@@ -724,11 +724,11 @@ export default function Page() {
 
 			{categoryKeys.length ? (
 				<>
-					<section className="mb-6 grid gap-4 rounded-3xl border border-white/10 bg-white/6 p-4 backdrop-blur sm:grid-cols-2 xl:grid-cols-[1.3fr_2.5fr_1.2fr_1.2fr]">
-						<label className="flex flex-col gap-2 text-sm font-semibold">
+					<section className="mb-6 grid gap-3 rounded-[1.75rem] border border-white/10 bg-white/6 p-3 backdrop-blur sm:gap-4 sm:p-4 md:grid-cols-2 xl:grid-cols-[1.3fr_2.5fr_1.2fr_1.2fr]">
+						<label className="flex flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
 							<span>🎯 Select Category:</span>
 							<select
-								className="rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 outline-none"
+								className="min-h-11 rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 text-sm outline-none sm:text-base"
 								onChange={(event) => {
 									setSelectedCategory(event.target.value);
 									setSelectedEventLabel("");
@@ -744,10 +744,10 @@ export default function Page() {
 							</select>
 						</label>
 
-						<label className="flex flex-col gap-2 text-sm font-semibold">
+						<label className="flex flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
 							<span>📌 Select JKT48 Event:</span>
 							<select
-								className="rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 outline-none"
+								className="min-h-11 rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 text-sm outline-none sm:text-base"
 								onChange={(event) => {
 									setSelectedEventLabel(event.target.value);
 									setSelectedDate("");
@@ -762,10 +762,10 @@ export default function Page() {
 							</select>
 						</label>
 
-						<label className="flex flex-col gap-2 text-sm font-semibold">
+						<label className="flex flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
 							<span>🔍 Search Name/Nickname...</span>
 							<input
-								className="rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 outline-none"
+								className="min-h-11 rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 text-sm outline-none sm:text-base"
 								onChange={(event) => {
 									setSearchQuery(event.target.value);
 									setSelectedDate("");
@@ -775,7 +775,7 @@ export default function Page() {
 							/>
 						</label>
 
-						<label className="mt-1 flex items-center gap-3 rounded-xl border border-white/12 bg-slate-950/50 px-3 py-3 text-sm font-semibold">
+						<label className="mt-1 flex min-h-11 items-center gap-3 rounded-xl border border-white/12 bg-slate-950/50 px-3 py-3 text-sm font-semibold sm:text-[0.95rem]">
 							<input
 								checked={availableOnly}
 								className="h-4 w-4"
@@ -838,10 +838,10 @@ export default function Page() {
 										<div className="flex flex-wrap gap-2">
 											{dateKeys.map((dateKey) => (
 												<button
-													className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+													className={`min-h-11 rounded-full border px-4 py-2 text-sm font-semibold transition supports-[hover:hover]:hover:bg-white/10 ${
 														dateKey === activeDate
 															? "border-emerald-400 bg-emerald-500/20 text-emerald-100"
-															: "border-white/12 bg-white/6 text-white/70 hover:bg-white/10"
+															: "border-white/12 bg-white/6 text-white/70"
 													}`}
 													key={dateKey}
 													onClick={() => setSelectedDate(dateKey)}
@@ -886,14 +886,14 @@ export default function Page() {
 										);
 
 										return (
-											<section className="mb-7" key={`${sessionLabel}-${session.startTime}`}>
+											<section className="mb-6 sm:mb-7" key={`${sessionLabel}-${session.startTime}`}>
 												{!isSearchMode ? (
-													<h3 className="mb-4 mt-1 text-base font-semibold">
+													<h3 className="mb-3 mt-1 text-sm font-semibold sm:mb-4 sm:text-base lg:text-lg">
 														{sessionLabel}
-														<span className="ml-1 text-[13px] font-medium opacity-50">{timeInfo}</span>
+														<span className="ml-1 text-[11px] font-medium opacity-50 sm:text-[13px]">{timeInfo}</span>
 													</h3>
 												) : null}
-												<div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-4 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] md:gap-5 max-[640px]:grid-cols-2 max-[640px]:gap-3">
+												<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
 													{sessionCards.map((card) => (
 														<MemberCard card={card} key={card.id} />
 													))}
