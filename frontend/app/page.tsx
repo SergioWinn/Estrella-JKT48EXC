@@ -725,10 +725,10 @@ export default function Page() {
 			{categoryKeys.length ? (
 				<>
 					<section className="mb-6 grid gap-3 rounded-[1.75rem] border border-white/10 bg-white/6 p-3 backdrop-blur sm:gap-4 sm:p-4 md:grid-cols-2 xl:grid-cols-[1.3fr_2.5fr_1.2fr_1.2fr]">
-						<label className="flex flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
+						<label className="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
 							<span>🎯 Select Category:</span>
 							<select
-								className="min-h-11 rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 text-sm outline-none sm:text-base"
+								className="min-h-11 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 pr-10 text-sm outline-none sm:text-base"
 								onChange={(event) => {
 									setSelectedCategory(event.target.value);
 									setSelectedEventLabel("");
@@ -744,10 +744,10 @@ export default function Page() {
 							</select>
 						</label>
 
-						<label className="flex flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
+						<label className="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
 							<span>📌 Select JKT48 Event:</span>
 							<select
-								className="min-h-11 rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 text-sm outline-none sm:text-base"
+								className="min-h-11 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 pr-10 text-sm outline-none sm:text-base"
 								onChange={(event) => {
 									setSelectedEventLabel(event.target.value);
 									setSelectedDate("");
@@ -762,10 +762,10 @@ export default function Page() {
 							</select>
 						</label>
 
-						<label className="flex flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
+						<label className="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
 							<span>🔍 Search Name/Nickname...</span>
 							<input
-								className="min-h-11 rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 text-sm outline-none sm:text-base"
+								className="min-h-11 w-full min-w-0 rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 text-sm outline-none sm:text-base"
 								onChange={(event) => {
 									setSearchQuery(event.target.value);
 									setSelectedDate("");
@@ -775,7 +775,7 @@ export default function Page() {
 							/>
 						</label>
 
-						<label className="mt-1 flex min-h-11 items-center gap-3 rounded-xl border border-white/12 bg-slate-950/50 px-3 py-3 text-sm font-semibold sm:text-[0.95rem]">
+						<label className="mt-1 flex min-h-11 min-w-0 items-center gap-3 rounded-xl border border-white/12 bg-slate-950/50 px-3 py-3 text-sm font-semibold sm:text-[0.95rem]">
 							<input
 								checked={availableOnly}
 								className="h-4 w-4"
