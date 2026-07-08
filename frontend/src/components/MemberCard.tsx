@@ -86,7 +86,7 @@ export function MemberCard({ card }: MemberCardProps) {
 	return (
 		<article className={statusClasses[card.status]}>
 			<a
-				className="flex h-full flex-col items-center text-inherit no-underline"
+				className="flex h-full w-full flex-col items-center text-inherit no-underline"
 				href={card.purchaseLink}
 				rel="noreferrer"
 				target="_blank"
