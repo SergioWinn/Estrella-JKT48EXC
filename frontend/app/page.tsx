@@ -705,7 +705,7 @@ export default function Page() {
 						<div className="h-24 animate-pulse rounded-2xl border border-white/10 bg-white/6" />
 						<div className="h-24 animate-pulse rounded-2xl border border-white/10 bg-white/6" />
 					</div>
-					<div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-5 max-[500px]:grid-cols-2 max-[500px]:gap-3">
+					<div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5 sm:gap-4">
 						{Array.from({ length: 6 }).map((_, index) => (
 							<div
 								className="h-64 animate-pulse rounded-2xl border border-white/10 bg-white/6"
@@ -893,7 +893,7 @@ export default function Page() {
 														<span className="ml-1 text-[11px] font-medium opacity-50 sm:text-[13px]">{timeInfo}</span>
 													</h3>
 												) : null}
-												<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+												<div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5 sm:gap-4">
 													{sessionCards.map((card) => (
 														<MemberCard card={card} key={card.id} />
 													))}
