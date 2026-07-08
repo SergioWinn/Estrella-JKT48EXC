@@ -418,7 +418,7 @@ function buildCard(args: {
 
 	let status: MemberCardViewModel["status"] = "avail";
 	let buttonLabel = `${availableQuota}&nbsp;LEFT`;
-	let badgeLabel: string | null = "AVAILABLE";
+	let badgeLabel: string | null = "OPEN";
 	let badgeClassName = "member-card-badge-avail";
 	let progressPercent = totalCapacity > 0 ? (soldCount / totalCapacity) * 100 : 0;
 	let progressColor = "#10B981";
