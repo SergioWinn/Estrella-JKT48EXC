@@ -13,7 +13,6 @@ import {
 	DotIcon,
 	FlameIcon,
 	PinIcon,
-	RefreshIcon,
 	SearchIcon,
 	SupportIcon,
 	TicketIcon,
@@ -579,6 +578,7 @@ export default function Page() {
 		eventOptions.find((option) => option.label === selectedEventLabel) ?? eventOptions[0] ?? null;
 	const activeEvent = activeEventOption?.data;
 	const [nowWib, setNowWib] = useState(() => getNowWib());
+	const [lastRefresh, setLastRefresh] = useState<{ code: string; timestamp: Date } | null>(null);
 	const [theme, setTheme] = useState<ThemeMode>(() => {
 		if (typeof document !== "undefined" && document.documentElement.dataset.theme === "light") {
 			return "light";
@@ -591,10 +591,20 @@ export default function Page() {
 	const detailSWR = useSWR<ApiEnvelope<EventDetail>>(
 		activeEventCode ? `/exclusives/${activeEventCode}` : null,
 		fetcher,
-		FOCUSED_POLLING,
+		{
+			...FOCUSED_POLLING,
+			onSuccess: () => {
+				if (!activeEventCode) {
+					return;
+				}
+
+				setLastRefresh({ code: activeEventCode, timestamp: getNowWib() });
+			},
+		},
 	);
 
 	const currentEvent = detailSWR.data?.data ?? activeEvent;
+	const lastUpdatedWib = lastRefresh?.code === activeEventCode ? lastRefresh.timestamp : null;
 	const { nicknameMap, photoMap } = useMemo(
 		() => buildMemberMaps(membersResponse?.data ?? []),
 		[membersResponse?.data],
@@ -938,12 +948,12 @@ export default function Page() {
 								</div>
 							) : (
 								<div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)]">
-									<p className="m-0 inline-flex items-center gap-2"><RefreshIcon className="size-4" />Live now</p>
+									<p className="m-0 inline-flex items-center gap-2"><ClockIcon className="size-4" />Last updated</p>
 									<div
 										className="inline-flex min-h-9 items-center gap-2 rounded-full border border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent-text)]"
 									>
 										<DotIcon className="size-2.5 text-[var(--accent)]" />
-										{formatDate(nowWib)} {formatTime(nowWib)} WIB
+										{lastUpdatedWib ? `${formatDate(lastUpdatedWib)} ${formatTime(lastUpdatedWib)} WIB` : "Waiting for sync"}
 									</div>
 								</div>
 							)}
@@ -1066,7 +1076,7 @@ export default function Page() {
 										<div className="text-right text-[var(--accent-text)]">
 											<div className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--share-chip-border)] bg-[color:var(--share-chip-bg)] px-2.5 py-1 text-[11px] font-bold">
 												<ClockIcon className="size-3.5" />
-												<span>{formatDate(nowWib)} {formatTime(nowWib)} WIB</span>
+												<span>{lastUpdatedWib ? `${formatDate(lastUpdatedWib)} ${formatTime(lastUpdatedWib)} WIB` : `${formatDate(nowWib)} ${formatTime(nowWib)} WIB`}</span>
 											</div>
 											<div className="mt-1 text-[9px] font-bold tracking-[0.5px] text-[var(--accent-text)] opacity-80">LIVE TRACKER BY @ESTRELLAWIN19</div>
 										</div>
