@@ -61,15 +61,9 @@ export function MemberCard({ card }: MemberCardProps) {
 				<div
 					aria-label={card.buttonLabel.replace(/&nbsp;/g, " ")}
 					className="member-card-progress"
+					style={{ backgroundColor: card.progressColor }}
 					role="img"
 				>
-					<div
-						className="member-card-progress-fill"
-						style={{
-							backgroundColor: card.progressColor,
-							width: `${card.progressPercent}%`,
-						}}
-					/>
 					<div
 						className="member-card-progress-text"
 						dangerouslySetInnerHTML={{ __html: card.buttonLabel }}

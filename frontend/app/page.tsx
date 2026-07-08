@@ -420,7 +420,7 @@ function buildCard(args: {
 	let buttonLabel = `${availableQuota}&nbsp;LEFT`;
 	let badgeLabel: string | null = "AVAILABLE";
 	let badgeClassName = "member-card-badge-avail";
-	let progressPercent = totalCapacity > 0 ? (soldCount / totalCapacity) * 100 : 0;
+	let progressPercent = 100;
 	let progressColor = "#10B981";
 	let clickable = true;
 
