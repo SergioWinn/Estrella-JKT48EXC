@@ -724,7 +724,7 @@ export default function Page() {
 
 			{categoryKeys.length ? (
 				<>
-					<section className="mb-6 grid gap-3 rounded-[1.75rem] border border-white/10 bg-white/6 p-3 backdrop-blur sm:gap-4 sm:p-4 md:grid-cols-2 xl:grid-cols-[1.15fr_2.3fr_1.15fr_auto]">
+					<section className="mb-6 grid gap-3 rounded-[1.75rem] border border-white/10 bg-white/6 p-3 backdrop-blur sm:gap-4 sm:p-4 md:grid-cols-2 xl:grid-cols-[1.05fr_2.25fr_1.15fr_auto]">
 						<label className="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
 							<span>🎯 Select Category:</span>
 							<select
@@ -775,12 +775,15 @@ export default function Page() {
 							/>
 						</label>
 
-						<label className="mt-1 flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-xl border border-white/12 bg-slate-950/50 px-3 py-3 text-sm font-semibold sm:justify-self-end sm:text-[0.95rem] xl:min-w-[220px]">
-							<div className="min-w-0">
-								<div className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300/75">View Filter</div>
+						<label className="mt-1 flex min-h-11 min-w-0 items-center gap-3 rounded-full border border-white/12 bg-slate-950/55 px-3 py-2.5 text-sm font-semibold sm:justify-self-end sm:text-[0.95rem] xl:min-w-[210px]">
+							<div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-emerald-400/18 bg-emerald-500/10 text-sm text-emerald-300">
+								●
+							</div>
+							<div className="min-w-0 flex-1">
+								<div className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300/75">Lane Filter</div>
 								<div className="truncate text-sm text-white">Available only</div>
 							</div>
-							<span className="relative inline-flex shrink-0 items-center">
+							<span className="relative ml-auto inline-flex shrink-0 items-center">
 								<input
 									checked={availableOnly}
 									className="peer sr-only"
@@ -818,36 +821,62 @@ export default function Page() {
 
 							<section className="mb-6 grid gap-3 md:grid-cols-3 sm:gap-4">
 								<div className="rounded-[1.6rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-									<div className="flex items-center justify-between gap-3">
-										<div className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/45">Total Tickets</div>
+									<div className="flex items-start justify-between gap-3">
+										<div>
+											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/40">Board Capacity</div>
+											<div className="mt-1 text-xs text-white/55">Total tickets released</div>
+										</div>
 										<div className="text-xs text-rose-300">🎟️</div>
 									</div>
-									<div className="mt-3 text-[2rem] font-extrabold leading-none tracking-[-0.04em] sm:text-[2.3rem]">{metrics.totalTickets.toLocaleString("id-ID")}</div>
-									<div className="mt-4 h-1 w-full rounded-full bg-white/5">
-										<div className="h-1 w-[100%] rounded-full bg-rose-400/70" />
+									<div className="mt-5 flex items-end justify-between gap-3">
+										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] tabular-nums sm:text-[2.3rem]">
+											{metrics.totalTickets.toLocaleString("id-ID")}
+										</div>
+										<div className="pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/35">Live board</div>
+									</div>
+									<div className="mt-4 flex items-center gap-3">
+										<div className="h-px flex-1 bg-rose-400/60" />
+										<div className="text-[10px] font-medium text-white/45">session pool</div>
 									</div>
 								</div>
 								<div className="rounded-[1.6rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-									<div className="flex items-center justify-between gap-3">
-										<div className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/45">Remaining</div>
+									<div className="flex items-start justify-between gap-3">
+										<div>
+											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/40">Seats Still Live</div>
+											<div className="mt-1 text-xs text-white/55">Available to claim now</div>
+										</div>
 										<div className="text-xs text-emerald-300">📦</div>
 									</div>
-									<div className="mt-3 text-[2rem] font-extrabold leading-none tracking-[-0.04em] sm:text-[2.3rem]">{metrics.remaining.toLocaleString("id-ID")}</div>
-									<div className="mt-4 h-1 w-full rounded-full bg-white/5">
-										<div
-											className="h-1 rounded-full bg-emerald-400/75"
-											style={{ width: `${Math.max(6, Math.min(100, (metrics.remaining / Math.max(metrics.totalTickets, 1)) * 100))}%` }}
-										/>
+									<div className="mt-5 flex items-end justify-between gap-3">
+										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] tabular-nums sm:text-[2.3rem]">
+											{metrics.remaining.toLocaleString("id-ID")}
+										</div>
+										<div className="pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300/70">open lanes</div>
+									</div>
+									<div className="mt-4 flex items-center gap-3">
+										<div className="h-px flex-1 bg-emerald-400/65" />
+										<div className="text-[10px] font-medium text-white/45">
+											{Math.round((metrics.remaining / Math.max(metrics.totalTickets, 1)) * 100)}% inventory
+										</div>
 									</div>
 								</div>
 								<div className="rounded-[1.6rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-									<div className="flex items-center justify-between gap-3">
-										<div className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/45">Sold Rate</div>
+									<div className="flex items-start justify-between gap-3">
+										<div>
+											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/40">Fill Velocity</div>
+											<div className="mt-1 text-xs text-white/55">How full the board already is</div>
+										</div>
 										<div className="text-xs text-amber-300">🔥</div>
 									</div>
-									<div className="mt-3 text-[2rem] font-extrabold leading-none tracking-[-0.04em] sm:text-[2.3rem]">{metrics.soldRate.toFixed(1)}%</div>
-									<div className="mt-4 h-1 w-full rounded-full bg-white/5">
-										<div className="h-1 rounded-full bg-amber-400/75" style={{ width: `${Math.max(6, metrics.soldRate)}%` }} />
+									<div className="mt-5 flex items-end justify-between gap-3">
+										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] tabular-nums sm:text-[2.3rem]">
+											{metrics.soldRate.toFixed(1)}%
+										</div>
+										<div className="pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300/70">claim rate</div>
+									</div>
+									<div className="mt-4 flex items-center gap-3">
+										<div className="h-px flex-1 bg-amber-400/65" />
+										<div className="text-[10px] font-medium text-white/45">{(100 - metrics.soldRate).toFixed(1)}% left</div>
 									</div>
 								</div>
 							</section>
