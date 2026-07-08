@@ -670,7 +670,7 @@ export default function Page() {
 						</a>
 					</span>
 					<a
-						className="inline-flex min-h-11 items-center rounded-full bg-rose-500 px-4 py-2 text-xs font-bold text-white no-underline transition supports-[hover:hover]:hover:-translate-y-px supports-[hover:hover]:hover:bg-rose-600"
+						className="inline-flex min-h-11 items-center rounded-full bg-rose-500 px-4 py-2 text-xs font-bold text-white no-underline transition hover:-translate-y-px hover:bg-rose-600"
 						href="https://tako.id/Sportagame19Win"
 						rel="noreferrer"
 						target="_blank"
@@ -775,26 +775,39 @@ export default function Page() {
 							/>
 						</label>
 
-						<label className="mt-1 flex min-h-11 min-w-0 items-center gap-3 rounded-full border border-white/12 bg-slate-950/55 px-3 py-2.5 text-sm font-semibold sm:justify-self-end sm:text-[0.95rem] xl:min-w-[210px]">
+						<div className="mt-1 flex min-h-11 min-w-0 items-center gap-3 rounded-full border border-white/12 bg-slate-950/55 px-3 py-2.5 text-sm font-semibold sm:justify-self-end sm:text-[0.95rem] xl:min-w-[300px]">
 							<div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-emerald-400/18 bg-emerald-500/10 text-sm text-emerald-300">
 								●
 							</div>
 							<div className="min-w-0 flex-1">
 								<div className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300/75">Lane Filter</div>
-								<div className="truncate text-sm text-white">Available only</div>
+								<div className="truncate text-sm text-white">Choose what the board shows</div>
 							</div>
-							<span className="relative ml-auto inline-flex shrink-0 items-center">
-								<input
-									checked={availableOnly}
-									className="peer sr-only"
-									onChange={(event) => setAvailableOnly(event.target.checked)}
-									type="checkbox"
-								/>
-								<span className="h-7 w-12 rounded-full border border-white/12 bg-slate-900/90 transition-colors peer-checked:bg-emerald-500/25 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-300/80 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-slate-950">
-									<span className="mt-[3px] ml-[3px] block size-5 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.25)] transition-transform peer-checked:translate-x-5 peer-checked:bg-emerald-300" />
-								</span>
-							</span>
-						</label>
+							<div className="ml-auto inline-flex shrink-0 rounded-full border border-white/10 bg-slate-900/95 p-1">
+								<button
+									className={`min-h-9 rounded-full px-3 text-[11px] font-bold uppercase tracking-[0.14em] transition ${
+										!availableOnly
+											? "bg-white text-slate-950 shadow-[0_4px_12px_rgba(0,0,0,0.18)]"
+											: "text-white/62 hover:text-white"
+									}`}
+									onClick={() => setAvailableOnly(false)}
+									type="button"
+								>
+									All lanes
+								</button>
+								<button
+									className={`min-h-9 rounded-full px-3 text-[11px] font-bold uppercase tracking-[0.14em] transition ${
+										availableOnly
+											? "bg-emerald-400 text-slate-950 shadow-[0_4px_12px_rgba(16,185,129,0.22)]"
+											: "text-white/62 hover:text-white"
+									}`}
+									onClick={() => setAvailableOnly(true)}
+									type="button"
+								>
+									Available
+								</button>
+							</div>
+						</div>
 					</section>
 
 					{currentEvent ? (
@@ -902,7 +915,7 @@ export default function Page() {
 										<div className="flex flex-wrap gap-2">
 											{dateKeys.map((dateKey) => (
 												<button
-													className={`min-h-11 rounded-full border px-4 py-2 text-sm font-semibold transition supports-[hover:hover]:hover:bg-white/10 ${
+													className={`min-h-11 rounded-full border px-4 py-2 text-sm font-semibold transition hover:bg-white/10 ${
 														dateKey === activeDate
 															? "border-emerald-400 bg-emerald-500/20 text-emerald-100"
 															: "border-white/12 bg-white/6 text-white/70"
