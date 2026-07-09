@@ -673,6 +673,8 @@ export default function Page() {
 			});
 		});
 	})();
+	const allCardsClosed = cards.length > 0 && cards.every((card) => card.status === "closed");
+	const ticketsLeftNotBuyable = closed || allCardsClosed;
 
 	useEffect(() => {
 		const intervalId = window.setInterval(() => {
@@ -982,19 +984,31 @@ export default function Page() {
 									<div className="flex items-start justify-between gap-3">
 										<div>
 											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">Tickets Left</div>
-											<div className="mt-1 text-xs text-[var(--text-muted)]">Tickets you can still buy</div>
+											<div className="mt-1 text-xs text-[var(--text-muted)]">
+												{ticketsLeftNotBuyable ? "Sales already closed" : "Tickets you can still buy"}
+											</div>
 										</div>
-										<div className="text-[var(--available)]"><BoxIcon className="size-4" /></div>
+										<div className={ticketsLeftNotBuyable ? "text-[var(--closed)]" : "text-[var(--available)]"}>
+											<BoxIcon className="size-4" />
+										</div>
 									</div>
 									<div className="mt-5 flex items-end justify-between gap-3">
 										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] text-[var(--text)] tabular-nums sm:text-[2.3rem]">
 											{metrics.remaining.toLocaleString("id-ID")}
 										</div>
-										<div className="pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--available)]">still open</div>
+										<div
+											className={`pb-1 text-[10px] font-bold uppercase tracking-[0.2em] ${
+												ticketsLeftNotBuyable ? "text-[var(--closed)]" : "text-[var(--available)]"
+											}`}
+										>
+											{ticketsLeftNotBuyable ? "closed" : "still open"}
+										</div>
 									</div>
 									<div className="mt-4 flex items-center gap-3">
-										<div className="h-px flex-1 bg-[var(--available)]" />
-										<div className="text-[10px] font-medium text-[var(--text-faint)]">ready to buy</div>
+										<div className={`h-px flex-1 ${ticketsLeftNotBuyable ? "bg-[var(--closed)]" : "bg-[var(--available)]"}`} />
+										<div className="text-[10px] font-medium text-[var(--text-faint)]">
+											{ticketsLeftNotBuyable ? "not available" : "ready to buy"}
+										</div>
 									</div>
 								</div>
 								<div className="rounded-[1.6rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-elevated))] p-4 shadow-[inset_0_1px_0_var(--highlight)]">
