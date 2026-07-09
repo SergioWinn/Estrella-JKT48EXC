@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { getThemeBootstrapScript } from "./theme";
 
-const themeBootstrapScript = `(() => {
-  try {
-    const storedTheme = window.localStorage.getItem("gem-theme");
-    const theme = storedTheme === "light" ? "light" : "dark";
-    document.documentElement.dataset.theme = theme;
-  } catch {
-    document.documentElement.dataset.theme = "dark";
-  }
-})();`;
+const themeBootstrapScript = getThemeBootstrapScript("gem-theme");
 
 export const metadata: Metadata = {
 	title: "GLOBAL EXCLUSIVE MONITOR",

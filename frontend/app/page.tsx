@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { useEffect, useMemo, useState } from "react";
 
 import { MemberCard, type MemberCardViewModel } from "@/src/components/MemberCard";
+import { getInitialTheme, resolveTheme } from "./theme";
 import {
 	AlertIcon,
 	BoxIcon,
@@ -580,11 +581,14 @@ export default function Page() {
 	const [nowWib, setNowWib] = useState(() => getNowWib());
 	const [lastRefresh, setLastRefresh] = useState<{ code: string; timestamp: Date } | null>(null);
 	const [theme, setTheme] = useState<ThemeMode>(() => {
-		if (typeof document !== "undefined" && document.documentElement.dataset.theme === "light") {
-			return "light";
+		if (typeof window === "undefined") {
+			return "dark";
 		}
 
-		return "dark";
+		return getInitialTheme({
+			datasetTheme: document.documentElement.dataset.theme,
+			storedTheme: window.localStorage.getItem(THEME_STORAGE_KEY),
+		});
 	});
 
 	const activeEventCode = activeEvent?.code ?? null;
@@ -685,7 +689,10 @@ export default function Page() {
 	}, []);
 
 	useEffect(() => {
-		const restoredTheme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
+		const restoredTheme = getInitialTheme({
+			datasetTheme: document.documentElement.dataset.theme,
+			storedTheme: window.localStorage.getItem(THEME_STORAGE_KEY),
+		});
 
 		if (restoredTheme === theme) {
 			return;
@@ -699,9 +706,10 @@ export default function Page() {
 	}, [theme]);
 
 	function updateTheme(nextTheme: ThemeMode) {
-		setTheme(nextTheme);
-		document.documentElement.dataset.theme = nextTheme;
-		window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+		const resolvedTheme = resolveTheme(nextTheme);
+		setTheme(resolvedTheme);
+		document.documentElement.dataset.theme = resolvedTheme;
+		window.localStorage.setItem(THEME_STORAGE_KEY, resolvedTheme);
 	}
 
 	const pageError = membersError ?? codesError ?? eventsError;
