@@ -1,11 +1,5 @@
 # GLOBAL EXCLUSIVE MONITOR
 
-**Live Tracker for All JKT48 Exclusive Events**
-
-Developed by [@estrellawin19](https://x.com/estrellawin19)  
-[Support via Tako](https://tako.id/Sportagame19Win)  
-**LIVE MONITORING**
-
 GLOBAL EXCLUSIVE MONITOR is a full-stack web application for monitoring JKT48 exclusive event availability in near real time. The project combines a responsive Next.js frontend with a lightweight Cloudflare Worker proxy that normalizes upstream API access and handles common failure cases such as waiting-room responses and invalid payloads.
 
 ## Why This Project
