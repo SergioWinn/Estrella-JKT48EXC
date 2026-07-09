@@ -580,16 +580,7 @@ export default function Page() {
 	const activeEvent = activeEventOption?.data;
 	const [nowWib, setNowWib] = useState(() => getNowWib());
 	const [lastRefresh, setLastRefresh] = useState<{ code: string; timestamp: Date } | null>(null);
-	const [theme, setTheme] = useState<ThemeMode>(() => {
-		if (typeof window === "undefined") {
-			return "dark";
-		}
-
-		return getInitialTheme({
-			datasetTheme: document.documentElement.dataset.theme,
-			storedTheme: window.localStorage.getItem(THEME_STORAGE_KEY),
-		});
-	});
+	const [theme, setTheme] = useState<ThemeMode | null>(null);
 
 	const activeEventCode = activeEvent?.code ?? null;
 	const detailSWR = useSWR<ApiEnvelope<EventDetail>>(
@@ -689,21 +680,13 @@ export default function Page() {
 	}, []);
 
 	useEffect(() => {
-		const restoredTheme = getInitialTheme({
-			datasetTheme: document.documentElement.dataset.theme,
-			storedTheme: window.localStorage.getItem(THEME_STORAGE_KEY),
-		});
-
-		if (restoredTheme === theme) {
-			return;
-		}
-
-		const frameId = window.requestAnimationFrame(() => {
-			setTheme(restoredTheme);
-		});
-
-		return () => window.cancelAnimationFrame(frameId);
-	}, [theme]);
+		setTheme(
+			getInitialTheme({
+				datasetTheme: document.documentElement.dataset.theme,
+				storedTheme: window.localStorage.getItem(THEME_STORAGE_KEY),
+			}),
+		);
+	}, []);
 
 	function updateTheme(nextTheme: ThemeMode) {
 		const resolvedTheme = resolveTheme(nextTheme);
