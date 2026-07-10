@@ -15,6 +15,7 @@ import {
 	FlameIcon,
 	PinIcon,
 	SearchIcon,
+	SupportIcon,
 	TicketIcon,
 } from "@/src/components/UiIcons";
 
@@ -1100,7 +1101,7 @@ export default function Page() {
 							<section className="mb-4">
 								<div className="min-w-0">
 									<h2 className="text-2xl font-bold tracking-[-0.03em] text-[var(--text)] sm:text-[2rem]">{currentEvent.title ?? "Event"}</h2>
-								<div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-base text-[var(--text-muted)]">
+									<div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-base text-[var(--text-muted)]">
 										<span className="inline-flex items-center gap-2">
 											<CategoryIcon className="size-4 text-[var(--accent)]" />
 											{activeCategoryLabel}
@@ -1109,6 +1110,28 @@ export default function Page() {
 											<TicketIcon className="size-4 text-[var(--sold)]" />
 											IDR {(currentEvent.default_price ?? 0).toLocaleString("id-ID")}
 										</span>
+									</div>
+									<div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--text-muted)]">
+										<span>
+											Built by{" "}
+											<a
+												className="font-semibold text-[var(--accent)] hover:underline"
+												href="https://x.com/estrellawin19"
+												rel="noreferrer"
+												target="_blank"
+											>
+												@estrellawin19
+											</a>
+										</span>
+										<a
+											className="inline-flex items-center gap-2 font-semibold text-[var(--accent)] no-underline hover:underline"
+											href="https://tako.id/Sportagame19Win"
+											rel="noreferrer"
+											target="_blank"
+										>
+											<SupportIcon className="size-4 text-[var(--support)]" />
+											Support via Tako
+										</a>
 									</div>
 								</div>
 							</section>
@@ -1298,18 +1321,7 @@ export default function Page() {
 								) : null}
 							</section>
 
-							<footer className="mt-5 flex flex-col gap-2 border-t border-[color:var(--border)] pt-4 text-sm text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
-								<span>
-									Built by{" "}
-									<a
-										className="font-semibold text-[var(--accent)] hover:underline"
-										href="https://x.com/estrellawin19"
-										rel="noreferrer"
-										target="_blank"
-									>
-										@estrellawin19
-									</a>
-								</span>
+							<footer className="mt-5 border-t border-[color:var(--border)] pt-4 text-sm text-[var(--text-muted)]">
 								<span className="text-xs text-[var(--text-faint)]">Fast scan surface for live exclusive drops</span>
 							</footer>
 						</>
