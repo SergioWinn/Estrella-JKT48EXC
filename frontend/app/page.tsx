@@ -142,6 +142,8 @@ const WAITING_ROOM_POLLING = {
 	refreshInterval: 30000,
 } as const;
 
+const CLOCK_TICK_INTERVAL_MS = 30000;
+
 function parseJsonPayload<T>(bodyText: string): (T & ErrorResponsePayload) | null {
 	if (!bodyText.trim()) {
 		return null;
@@ -737,8 +739,8 @@ export default function Page() {
 		  })
 		: new Map<string, GroupedSession[]>();
 
-	const dateKeys = Array.from(groupedSessions.keys());
 	const isSearchMode = Boolean(searchQuery.trim());
+	const dateKeys = Array.from(groupedSessions.keys());
 	const activeDate = isSearchMode ? "" : dateKeys.includes(selectedDate) ? selectedDate : dateKeys[0] ?? "";
 	const visibleSessions = isSearchMode
 		? dateKeys.flatMap((key) => groupedSessions.get(key) ?? [])
@@ -750,7 +752,7 @@ export default function Page() {
 		: activeDate
 			? [{ dateKey: activeDate, sessions: groupedSessions.get(activeDate) ?? [] }]
 			: [];
- 	const visibleSessionCount = visibleDateGroups.reduce((total, group) => total + group.sessions.length, 0);
+	const visibleSessionCount = visibleDateGroups.reduce((total, group) => total + group.sessions.length, 0);
 
 	const cards = (() => {
 		if (!currentEvent) {
@@ -795,6 +797,19 @@ export default function Page() {
 			});
 		});
 	})();
+	const cardsBySessionKey = (() => {
+		const mapped = new Map<string, MemberCardViewModel[]>();
+
+		for (const card of cards) {
+			const lastSeparator = card.id.lastIndexOf("-");
+			const sessionKey = lastSeparator >= 0 ? card.id.slice(0, lastSeparator) : card.id;
+			const list = mapped.get(sessionKey) ?? [];
+			list.push(card);
+			mapped.set(sessionKey, list);
+		}
+
+		return mapped;
+	})();
 	const allCardsClosed = cards.length > 0 && cards.every((card) => card.status === "closed");
 	const ticketsLeftNotBuyable = closed || allCardsClosed;
 	const remainingMetricTitle = ticketsLeftNotBuyable ? "Quota Remaining" : "Tickets Left";
@@ -807,7 +822,7 @@ export default function Page() {
 	useEffect(() => {
 		const intervalId = window.setInterval(() => {
 			setNowWib(getNowWib());
-		}, 1000);
+		}, CLOCK_TICK_INTERVAL_MS);
 
 		return () => window.clearInterval(intervalId);
 	}, []);
@@ -1187,9 +1202,7 @@ export default function Page() {
 											{group.sessions.map((session) => {
 												const sessionLabel = stripSessionLabel(session.label);
 												const timeInfo = session.startTime ? ` | ${session.startTime.slice(0, 5)} - ${session.endTime.slice(0, 5)}` : "";
-												const sessionCards = cards.filter((card) =>
-													card.id.startsWith(`${session.date}-${sessionLabel}-${session.startTime}`),
-												);
+												const sessionCards = cardsBySessionKey.get(`${session.date}-${sessionLabel}-${session.startTime}`) ?? [];
 
 												return (
 													<section className="mb-5 last:mb-0 sm:mb-6" key={`${group.dateKey}-${sessionLabel}-${session.startTime}`}>
