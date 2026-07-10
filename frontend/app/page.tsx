@@ -15,7 +15,6 @@ import {
 	FlameIcon,
 	PinIcon,
 	SearchIcon,
-	SupportIcon,
 	TicketIcon,
 } from "@/src/components/UiIcons";
 
@@ -751,6 +750,7 @@ export default function Page() {
 		: activeDate
 			? [{ dateKey: activeDate, sessions: groupedSessions.get(activeDate) ?? [] }]
 			: [];
+ 	const visibleSessionCount = visibleDateGroups.reduce((total, group) => total + group.sessions.length, 0);
 
 	const cards = (() => {
 		if (!currentEvent) {
@@ -845,6 +845,7 @@ export default function Page() {
 			? `Checks every 3s · synced ${formatTime(lastUpdatedWib)} WIB`
 			: "Checks every 3s · waiting for first sync";
 	const showGlobalWorkerBanner = Boolean(workerErrorMessage && !currentEvent);
+ 	const showPrimaryStatus = Boolean(currentEvent || workerErrorMessage);
 
 	async function retryAll() {
 		if (isRetrying) {
@@ -862,13 +863,13 @@ export default function Page() {
 
 	return (
 		<main className="relative mx-auto w-full max-w-[1680px] px-3 py-4 text-[var(--text)] sm:px-5 sm:py-5 lg:px-8 lg:py-6 2xl:px-10">
-			<header className="mb-5 border-b border-[color:var(--border)] pb-4 sm:mb-6 sm:pb-5">
+			<header className="mb-4 border-b border-[color:var(--border)] pb-4 sm:mb-5 sm:pb-5">
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 					<div className="min-w-0 max-w-[58rem]">
-						<h1 className="m-0 text-[2rem] font-extrabold tracking-[-0.04em] text-[var(--text)] sm:text-[2.4rem] lg:text-[3rem]">
+						<h1 className="m-0 text-[2rem] font-extrabold tracking-[-0.04em] text-[var(--text)] sm:text-[2rem] lg:text-[2.5rem]">
 							GLOBAL EXCLUSIVE MONITOR
 						</h1>
-						<p className="mt-2 max-w-[62ch] text-sm font-medium text-[var(--text-muted)] sm:text-[0.95rem] lg:text-base">
+						<p className="mt-2 max-w-[62ch] text-sm font-medium text-[var(--text-muted)] sm:text-sm lg:text-base">
 							Track which JKT48 exclusive sessions are still actionable without digging through queue-heavy upstream pages.
 						</p>
 					</div>
@@ -928,18 +929,29 @@ export default function Page() {
 						</div>
 					</div>
 				</div>
-				<div className="mt-4 flex flex-wrap items-center gap-2.5 text-sm text-[var(--text-muted)]">
-					<div className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent)] sm:text-xs">
-						<span className="size-2 rounded-full bg-[var(--accent)]" />
-						{statusSummaryLabel}
-					</div>
-					{currentEvent ? (
-						<div className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)] sm:text-xs">
-							<ClockIcon className="size-3.5 text-[var(--accent)]" />
-							{statusDetailLabel}
+				{showPrimaryStatus ? (
+					<div className="mt-4 flex min-h-10 flex-wrap items-center gap-2 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-sm text-[var(--text-muted)]">
+						<div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent)] sm:text-xs">
+							<span className="size-2 rounded-full bg-[var(--accent)]" />
+							{statusSummaryLabel}
 						</div>
-					) : null}
-				</div>
+						<div className="hidden h-4 w-px bg-[var(--border)] sm:block" />
+						<div className="inline-flex items-center gap-2 text-sm">
+							<ClockIcon className="size-3.5 text-[var(--accent)]" />
+							<span>{statusDetailLabel}</span>
+						</div>
+						{workerWaitingRoom || detailError || pageError ? (
+							<button
+								className="ml-auto inline-flex min-h-10 items-center rounded-full border border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] px-4 py-2 text-sm font-semibold text-[var(--accent-text)] transition hover:bg-[color:var(--surface-soft)]"
+								onClick={retryAll}
+								disabled={isRetrying}
+								type="button"
+							>
+								{isRetrying ? "Refreshing..." : workerWaitingRoom ? "Retry refresh" : "Refresh data"}
+							</button>
+						) : null}
+					</div>
+				) : null}
 			</header>
 
 			{showGlobalWorkerBanner ? (
@@ -951,19 +963,9 @@ export default function Page() {
 							: "border border-[var(--sold)] bg-[color:var(--sold-soft)] text-[var(--sold-text)]"
 					}`}
 				>
-					<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-						<div>
+					<div>
 							{workerWaitingRoom ? <AlertIcon className="mr-2 inline size-4 align-[-2px]" /> : null}
 							{workerErrorMessage}
-						</div>
-						<button
-							className="inline-flex min-h-11 items-center justify-center rounded-full border border-current px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] transition hover:opacity-85"
-							onClick={retryAll}
-							disabled={isRetrying}
-							type="button"
-						>
-							{isRetrying ? "Refreshing..." : workerWaitingRoom ? "Retry refresh" : "Refresh data"}
-						</button>
 					</div>
 				</div>
 			) : null}
@@ -996,9 +998,9 @@ export default function Page() {
 
 			{categoryKeys.length ? (
 				<>
-					<section className="mb-6 grid gap-3 rounded-[1.75rem] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 backdrop-blur sm:gap-4 sm:p-4 md:grid-cols-2 xl:grid-cols-[1.05fr_2.25fr_1.15fr_auto]">
+					<section className="mb-5 grid gap-3 rounded-[1.5rem] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 sm:gap-3 sm:p-4 md:grid-cols-2 xl:grid-cols-[1.05fr_2.25fr_1.15fr_auto]">
 						<label className="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
-							<span className="inline-flex items-center gap-2"><CategoryIcon className="size-4 text-[var(--accent)]" />Format</span>
+							<span className="inline-flex items-center gap-2 text-sm"><CategoryIcon className="size-4 text-[var(--accent)]" />Event type</span>
 							<select
 								className="min-h-11 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-[color:var(--border)] bg-[color:var(--input-bg)] px-3 py-2 pr-10 text-sm text-[var(--text)] outline-none sm:text-base"
 								onChange={(event) => {
@@ -1017,7 +1019,7 @@ export default function Page() {
 						</label>
 
 						<label className="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
-							<span className="inline-flex items-center gap-2"><PinIcon className="size-4 text-[var(--sold)]" />Drop</span>
+							<span className="inline-flex items-center gap-2 text-sm"><PinIcon className="size-4 text-[var(--sold)]" />Event</span>
 							<select
 								className="min-h-11 w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-[color:var(--border)] bg-[color:var(--input-bg)] px-3 py-2 pr-10 text-sm text-[var(--text)] outline-none sm:text-base"
 								onChange={(event) => {
@@ -1035,7 +1037,7 @@ export default function Page() {
 						</label>
 
 						<label className="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:text-[0.95rem]">
-							<span className="block truncate whitespace-nowrap"><span className="inline-flex items-center gap-2"><SearchIcon className="size-4 text-[var(--accent)]" />Find member</span></span>
+							<span className="block truncate whitespace-nowrap"><span className="inline-flex items-center gap-2 text-sm"><SearchIcon className="size-4 text-[var(--accent)]" />Find member</span></span>
 							<input
 								className="min-h-11 w-full min-w-0 rounded-xl border border-[color:var(--border)] bg-[color:var(--input-bg)] px-3 py-2 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-faint)] sm:text-base"
 								onChange={(event) => {
@@ -1052,7 +1054,7 @@ export default function Page() {
 								<DotIcon className="size-2.5" />
 							</div>
 							<div className="min-w-0 flex-1">
-								<div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">Available Only</div>
+								<div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent)]">Available Only</div>
 								<div className="truncate text-sm text-[var(--text)]">Hide sold out and closed members</div>
 							</div>
 							<span className="relative ml-auto inline-flex shrink-0 items-center">
@@ -1084,7 +1086,7 @@ export default function Page() {
 							<section className="mb-4">
 								<div className="min-w-0">
 									<h2 className="text-2xl font-bold tracking-[-0.03em] text-[var(--text)] sm:text-[2rem]">{currentEvent.title ?? "Event"}</h2>
-									<div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--text-muted)] sm:text-[0.95rem]">
+									<div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--text-muted)]">
 										<span className="inline-flex items-center gap-2">
 											<CategoryIcon className="size-4 text-[var(--accent)]" />
 											{activeCategoryLabel}
@@ -1096,28 +1098,6 @@ export default function Page() {
 									</div>
 								</div>
 							</section>
-
-							{workerWaitingRoom ? (
-								<div aria-live="polite" className="mb-4 flex flex-col gap-3 rounded-2xl border border-[var(--warn)] bg-[color:var(--warn-soft)] p-4 text-sm text-[var(--warn-text)] sm:flex-row sm:items-center sm:justify-between">
-									<div>
-										<AlertIcon className="mr-2 inline size-4 align-[-2px]" />
-										Showing the latest cached data{staleMinutesAgo ? ` (${staleMinutesAgo})` : ""}. The upstream queue is active.
-									</div>
-									<button
-										className="inline-flex min-h-11 items-center justify-center rounded-full border border-current px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] transition hover:opacity-85"
-										onClick={retryAll}
-										disabled={isRetrying}
-										type="button"
-									>
-										{isRetrying ? "Refreshing..." : "Retry refresh"}
-									</button>
-								</div>
-							) : detailError ? (
-								<div aria-live="polite" className="mb-4 rounded-2xl border border-[var(--sold)] bg-[color:var(--sold-soft)] p-4 text-sm text-[var(--sold-text)]">
-									<p className="m-0 font-semibold">Unable to refresh live data.</p>
-									<p className="mb-0 mt-2 text-[var(--sold-text)]/90">The last successful snapshot is still visible below. Retry refresh when the upstream feed stabilizes.</p>
-								</div>
-							) : null}
 
 							{availableOnly && cards.length ? (
 								<div className="mb-4 rounded-2xl border border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] p-4 text-sm text-[var(--accent-text)]">
@@ -1193,30 +1173,13 @@ export default function Page() {
 								</div>
 							) : (
 								<div id="laporan-container">
-									<div className="share-banner" id="share-banner">
-										<div>
-											<h3 className="m-0 text-sm font-extrabold text-[var(--accent-text)]">{(currentEvent.title ?? "JKT48 Exclusive Event").toUpperCase()}</h3>
-											<p className="m-0 text-[11px] font-semibold text-[var(--accent-text)] opacity-90 inline-flex items-center gap-1.5">
-												{isSearchMode ? <SearchIcon className="size-3.5" /> : <CalendarIcon className="size-3.5" />}
-												<span>{isSearchMode ? searchQuery.trim().toUpperCase() : activeDate}</span>
-											</p>
-										</div>
-										<div className="text-right text-[var(--accent-text)]">
-											<div className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--share-chip-border)] bg-[color:var(--share-chip-bg)] px-2.5 py-1 text-[11px] font-bold">
-												<ClockIcon className="size-3.5" />
-												<span>{lastUpdatedWib ? `${formatDate(lastUpdatedWib)} ${formatTime(lastUpdatedWib)} WIB` : `${formatDate(nowWib)} ${formatTime(nowWib)} WIB`}</span>
-											</div>
-											<div className="mt-1 text-[9px] font-bold tracking-[0.5px] text-[var(--accent-text)] opacity-80">LIVE TRACKER BY @ESTRELLAWIN19</div>
-										</div>
-									</div>
-
 									{visibleDateGroups.map((group) => (
 										<section className="mb-6 last:mb-0 sm:mb-7" key={group.dateKey}>
 											{isSearchMode ? (
 												<div className="mb-4 flex items-center gap-2 border-b border-[color:var(--border)] pb-2 text-sm font-semibold text-[var(--text)] sm:text-base">
 													<CalendarIcon className="size-4 text-[var(--accent)]" />
 													<span>{group.dateKey}</span>
-													<span className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--text-faint)] sm:text-xs">
+													<span className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--text-faint)]">
 														{group.sessions.length} session{group.sessions.length === 1 ? "" : "s"}
 													</span>
 												</div>
@@ -1230,7 +1193,7 @@ export default function Page() {
 
 												return (
 													<section className="mb-5 last:mb-0 sm:mb-6" key={`${group.dateKey}-${sessionLabel}-${session.startTime}`}>
-														<h3 className="mb-3 mt-1 text-sm font-semibold text-[var(--text)] sm:mb-4 sm:text-base lg:text-lg">
+														<h3 className="mb-3 mt-1 text-sm font-semibold text-[var(--text)] sm:mb-4 sm:text-base lg:text-base">
 															{sessionLabel}
 															<span className="ml-1 text-[11px] font-medium text-[var(--text-faint)] sm:text-[13px]">{timeInfo}</span>
 														</h3>
@@ -1247,31 +1210,32 @@ export default function Page() {
 								</div>
 							)}
 
-							<section className="mt-6 grid gap-3 border-t border-[color:var(--border)] pt-4 md:grid-cols-3 sm:gap-4 sm:pt-5">
-								<div className="rounded-[1.6rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-elevated))] p-4 shadow-[inset_0_1px_0_var(--highlight)]">
+							<section className="mt-6 border-t border-[color:var(--border)] pt-4 sm:pt-5">
+								<div className="grid gap-3 md:grid-cols-2 sm:gap-4">
+									<div className="rounded-[1.5rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-elevated))] p-4 shadow-[inset_0_1px_0_var(--highlight)]">
 									<div className="flex items-start justify-between gap-3">
 										<div>
-											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">Total Tickets</div>
-											<div className="mt-1 text-xs text-[var(--text-muted)]">All tickets for this event</div>
+											<div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">Total Tickets</div>
+											<div className="mt-1 text-sm text-[var(--text-muted)]">All tickets for this event</div>
 										</div>
 										<div className="text-[var(--sold)]"><TicketIcon className="size-4" /></div>
 									</div>
 									<div className="mt-5 flex items-end justify-between gap-3">
-										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] text-[var(--text)] tabular-nums sm:text-[2.3rem]">
+										<div className="text-[1.75rem] font-extrabold leading-none tracking-[-0.04em] text-[var(--text)] tabular-nums sm:text-[2rem]">
 											{metrics.totalTickets.toLocaleString("id-ID")}
 										</div>
-										<div className="pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-faint)]">Event total</div>
+										<div className="pb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">Event total</div>
 									</div>
 									<div className="mt-4 flex items-center gap-3">
 										<div className="h-px flex-1 bg-[var(--sold)]" />
-										<div className="text-[10px] font-medium text-[var(--text-faint)]">all sessions</div>
+										<div className="text-[11px] font-medium text-[var(--text-faint)]">all sessions</div>
 									</div>
 								</div>
-								<div className="rounded-[1.6rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-elevated))] p-4 shadow-[inset_0_1px_0_var(--highlight)]">
+									<div className="rounded-[1.5rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-elevated))] p-4 shadow-[inset_0_1px_0_var(--highlight)]">
 									<div className="flex items-start justify-between gap-3">
 										<div>
-											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">{remainingMetricTitle}</div>
-											<div className="mt-1 text-xs text-[var(--text-muted)]">
+											<div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">{remainingMetricTitle}</div>
+											<div className="mt-1 text-sm text-[var(--text-muted)]">
 												{remainingMetricDescription}
 											</div>
 										</div>
@@ -1280,11 +1244,11 @@ export default function Page() {
 										</div>
 									</div>
 									<div className="mt-5 flex items-end justify-between gap-3">
-										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] text-[var(--text)] tabular-nums sm:text-[2.3rem]">
+										<div className="text-[1.75rem] font-extrabold leading-none tracking-[-0.04em] text-[var(--text)] tabular-nums sm:text-[2rem]">
 											{metrics.remaining.toLocaleString("id-ID")}
 										</div>
 										<div
-											className={`pb-1 text-[10px] font-bold uppercase tracking-[0.2em] ${
+											className={`pb-1 text-[11px] font-bold uppercase tracking-[0.16em] ${
 												ticketsLeftNotBuyable ? "text-[var(--closed)]" : "text-[var(--available)]"
 											}`}
 										>
@@ -1293,58 +1257,48 @@ export default function Page() {
 									</div>
 									<div className="mt-4 flex items-center gap-3">
 										<div className={`h-px flex-1 ${ticketsLeftNotBuyable ? "bg-[var(--closed)]" : "bg-[var(--available)]"}`} />
-										<div className="text-[10px] font-medium text-[var(--text-faint)]">
+										<div className="text-[11px] font-medium text-[var(--text-faint)]">
 											{remainingMetricFooter}
 										</div>
 									</div>
 								</div>
-								<div className="rounded-[1.6rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-elevated))] p-4 shadow-[inset_0_1px_0_var(--highlight)]">
-									<div className="flex items-start justify-between gap-3">
-										<div>
-											<div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">Sold Rate</div>
-											<div className="mt-1 text-xs text-[var(--text-muted)]">How many tickets are sold</div>
-										</div>
-										<div className="text-[var(--warn)]"><FlameIcon className="size-4" /></div>
-									</div>
-									<div className="mt-5 flex items-end justify-between gap-3">
-										<div className="text-[2rem] font-extrabold leading-none tracking-[-0.05em] text-[var(--text)] tabular-nums sm:text-[2.3rem]">
-											{metrics.soldRate.toFixed(1)}%
-										</div>
-										<div className="pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--warn)]">already sold</div>
-									</div>
-									<div className="mt-4 flex items-center gap-3">
-										<div className="h-px flex-1 bg-[var(--warn)]" />
-										<div className="text-[10px] font-medium text-[var(--text-faint)]">tickets not sold yet</div>
-									</div>
 								</div>
+								{!ticketsLeftNotBuyable ? (
+									<div className="rounded-[1.5rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--surface),var(--surface-elevated))] p-4 shadow-[inset_0_1px_0_var(--highlight)] md:col-span-2">
+										<div className="flex items-start justify-between gap-3">
+											<div>
+												<div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">Open sessions</div>
+												<div className="mt-1 text-sm text-[var(--text-muted)]">Schedules with members still available right now</div>
+											</div>
+											<div className="text-[var(--warn)]"><FlameIcon className="size-4" /></div>
+										</div>
+										<div className="mt-5 flex items-end justify-between gap-3">
+											<div className="text-[1.75rem] font-extrabold leading-none tracking-[-0.04em] text-[var(--text)] tabular-nums sm:text-[2rem]">
+												{visibleSessionCount.toLocaleString("id-ID")}
+											</div>
+											<div className="pb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--warn)]">live scan</div>
+										</div>
+										<div className="mt-4 flex items-center gap-3">
+											<div className="h-px flex-1 bg-[var(--warn)]" />
+											<div className="text-[11px] font-medium text-[var(--text-faint)]">matching session groups</div>
+										</div>
+									</div>
+								) : null}
 							</section>
 
-							<footer className="mt-6 flex flex-col gap-3 border-t border-[color:var(--border)] pt-4 text-sm text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
-								<div className="flex flex-wrap items-center gap-3">
-									<span>
-										Built by{" "}
-										<a
-											className="font-semibold text-[var(--accent)] hover:underline"
-											href="https://x.com/estrellawin19"
-											rel="noreferrer"
-											target="_blank"
-										>
-											@estrellawin19
-										</a>
-									</span>
+							<footer className="mt-5 flex flex-col gap-2 border-t border-[color:var(--border)] pt-4 text-sm text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
+								<span>
+									Built by{" "}
 									<a
-										className="inline-flex items-center gap-2 text-[var(--accent-text)] no-underline transition hover:text-[var(--support)]"
-										href="https://tako.id/Sportagame19Win"
+										className="font-semibold text-[var(--accent)] hover:underline"
+										href="https://x.com/estrellawin19"
 										rel="noreferrer"
 										target="_blank"
 									>
-										<SupportIcon className="size-4 text-[var(--support)]" />
-										Support via Tako
+										@estrellawin19
 									</a>
-								</div>
-								<span className="text-xs uppercase tracking-[0.16em] text-[var(--text-faint)]">
-									Fast scan surface for live exclusive drops
 								</span>
+								<span className="text-xs text-[var(--text-faint)]">Fast scan surface for live exclusive drops</span>
 							</footer>
 						</>
 					) : null}
