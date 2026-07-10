@@ -962,7 +962,7 @@ export default function Page() {
 				</section>
 			) : null}
 
-			{!isLoading && !categoryKeys.length ? (
+			{!isLoading && !categoryKeys.length && !pageError && !detailError ? (
 				<div className="rounded-2xl border border-[var(--sold)] bg-[color:var(--sold-soft)] p-4 text-sm text-[var(--sold-text)]">
 					No active Exclusive events found or failed to fetch data.
 				</div>

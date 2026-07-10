@@ -1,6 +1,8 @@
 const API_BASE_URL = "https://jkt48.com/api/v1";
 const CACHE_TTL_SECONDS = 60 * 60;
 const COOKIE_TTL_SECONDS = 15 * 60;
+const CACHE_WRITE_INTERVAL_SECONDS = 5 * 60;
+const COOKIE_WRITE_INTERVAL_SECONDS = 5 * 60;
 const WAITING_ROOM_COOKIE_KEY = "waiting-room-cookie";
 const REQUEST_HEADERS = {
 	"Accept": "application/json, text/plain, */*",
@@ -33,6 +35,11 @@ interface Env {
 interface CacheEntry {
 	cachedAt: string;
 	payload: unknown;
+}
+
+interface TimedValueEntry {
+	cachedAt: string;
+	value: string;
 }
 
 interface ErrorBody {
@@ -124,6 +131,30 @@ function extractWaitingRoomCookie(response: Response): string | null {
 	return match?.[0] ?? null;
 }
 
+function isFreshEnough(cachedAt: string, minAgeSeconds: number): boolean {
+	const cachedAtMs = Date.parse(cachedAt);
+
+	if (Number.isNaN(cachedAtMs)) {
+		return false;
+	}
+
+	return Date.now() - cachedAtMs < minAgeSeconds * 1000;
+}
+
+async function getTimedValue(env: Env, key: string): Promise<TimedValueEntry | null> {
+	const raw = await env.JKT48_CACHE.get(key);
+
+	if (!raw) {
+		return null;
+	}
+
+	try {
+		return JSON.parse(raw) as TimedValueEntry;
+	} catch {
+		return null;
+	}
+}
+
 async function saveWaitingRoomCookie(env: Env, response: Response): Promise<void> {
 	const cookie = extractWaitingRoomCookie(response);
 
@@ -131,13 +162,30 @@ async function saveWaitingRoomCookie(env: Env, response: Response): Promise<void
 		return;
 	}
 
-	await env.JKT48_CACHE.put(WAITING_ROOM_COOKIE_KEY, cookie, {
-		expirationTtl: COOKIE_TTL_SECONDS,
-	});
+	const current = await getTimedValue(env, WAITING_ROOM_COOKIE_KEY);
+
+	if (current?.value === cookie && isFreshEnough(current.cachedAt, COOKIE_WRITE_INTERVAL_SECONDS)) {
+		return;
+	}
+
+	try {
+		await env.JKT48_CACHE.put(
+			WAITING_ROOM_COOKIE_KEY,
+			JSON.stringify({
+				cachedAt: new Date().toISOString(),
+				value: cookie,
+			} satisfies TimedValueEntry),
+			{
+				expirationTtl: COOKIE_TTL_SECONDS,
+			},
+		);
+	} catch {
+		// ponytail: cache write is optional; return fresh upstream data even if KV is throttled.
+	}
 }
 
 async function getWaitingRoomCookie(env: Env): Promise<string | null> {
-	return env.JKT48_CACHE.get(WAITING_ROOM_COOKIE_KEY);
+	return (await getTimedValue(env, WAITING_ROOM_COOKIE_KEY))?.value ?? null;
 }
 
 function buildUpstreamHeaders(cookie: string | null): Headers {
@@ -151,14 +199,24 @@ function buildUpstreamHeaders(cookie: string | null): Headers {
 }
 
 async function savePayloadToCache(env: Env, pathname: string, payload: unknown): Promise<void> {
+	const current = await getCachedPayload(env, pathname);
+
+	if (current && isFreshEnough(current.cachedAt, CACHE_WRITE_INTERVAL_SECONDS)) {
+		return;
+	}
+
 	const entry: CacheEntry = {
 		cachedAt: new Date().toISOString(),
 		payload,
 	};
 
-	await env.JKT48_CACHE.put(getCacheKey(pathname), JSON.stringify(entry), {
-		expirationTtl: CACHE_TTL_SECONDS,
-	});
+	try {
+		await env.JKT48_CACHE.put(getCacheKey(pathname), JSON.stringify(entry), {
+			expirationTtl: CACHE_TTL_SECONDS,
+		});
+	} catch {
+		// ponytail: cache write is optional; serve live upstream data and skip stale fallback refresh.
+	}
 }
 
 async function getCachedPayload(env: Env, pathname: string): Promise<CacheEntry | null> {
@@ -192,6 +250,28 @@ function withStaleMetadata(payload: unknown, cachedAt: string): unknown {
 		lastUpdated: cachedAt,
 		queueStatus: "waiting_room",
 	};
+}
+
+async function staleCacheResponse(
+	request: Request,
+	env: Env,
+	pathname: string,
+	queueStatus: "waiting_room" | "upstream_unavailable",
+): Promise<Response | null> {
+	const cached = await getCachedPayload(env, pathname);
+
+	if (!cached) {
+		return null;
+	}
+
+	return json(
+		request,
+		{
+			...((withStaleMetadata(cached.payload, cached.cachedAt) as Record<string, unknown>) ?? {}),
+			queueStatus,
+		},
+		200,
+	);
 }
 
 async function readUpstreamJson(response: Response): Promise<unknown> {
@@ -248,17 +328,26 @@ export default {
 			const message = caught instanceof Error ? caught.message : "UPSTREAM_FETCH_FAILED";
 
 			if (message === "UPSTREAM_WAITING_ROOM") {
-				const cached = await getCachedPayload(env, url.pathname);
-
-				if (cached) {
-					return json(request, withStaleMetadata(cached.payload, cached.cachedAt), 200);
+				const cachedResponse = await staleCacheResponse(request, env, url.pathname, "waiting_room");
+				if (cachedResponse) {
+					return cachedResponse;
 				}
 
 				return errorResponse(request, 503, "waiting_room", "Cloudflare Waiting Room is active.");
 			}
 
 			if (message === "UPSTREAM_INVALID_JSON") {
+				const cachedResponse = await staleCacheResponse(request, env, url.pathname, "upstream_unavailable");
+				if (cachedResponse) {
+					return cachedResponse;
+				}
+
 				return errorResponse(request, 502, "upstream_invalid_json", "JKT48 upstream returned a non-JSON payload.");
+			}
+
+			const cachedResponse = await staleCacheResponse(request, env, url.pathname, "upstream_unavailable");
+			if (cachedResponse) {
+				return cachedResponse;
 			}
 
 			return errorResponse(request, 502, "upstream_fetch_failed", "Failed to reach the JKT48 upstream API.");
