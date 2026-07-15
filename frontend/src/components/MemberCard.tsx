@@ -109,7 +109,7 @@ export function MemberCard({ card }: MemberCardProps) {
 							}}
 						/>
 						<div
-							className="relative z-10 inline-flex min-h-7 min-w-0 items-center justify-center rounded-full bg-[var(--color-paper)] px-2 text-xs font-extrabold tracking-[0.12em] text-[var(--color-ink)]"
+							className="relative z-10 inline-flex min-h-7 min-w-0 items-center justify-center text-xs font-extrabold tracking-[0.12em] text-[var(--progress-text)] [text-shadow:var(--shadow-label)]"
 							dangerouslySetInnerHTML={{ __html: card.buttonLabel }}
 						/>
 					</a>
@@ -127,7 +127,7 @@ export function MemberCard({ card }: MemberCardProps) {
 							}}
 						/>
 						<div
-							className="relative z-10 inline-flex min-h-7 min-w-0 items-center justify-center rounded-full bg-[var(--color-paper)] px-2 text-xs font-extrabold tracking-[0.12em] text-[var(--color-ink)]"
+							className="relative z-10 inline-flex min-h-7 min-w-0 items-center justify-center text-xs font-extrabold tracking-[0.12em] text-[var(--progress-text)] [text-shadow:var(--shadow-label)]"
 							dangerouslySetInnerHTML={{ __html: card.buttonLabel }}
 						/>
 					</div>
