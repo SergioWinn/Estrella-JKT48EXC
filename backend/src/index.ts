@@ -1,7 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 
 const API_BASE_URL = "https://jkt48.com/api/v1";
-const LIVE_REFRESH_INTERVAL_SECONDS = 3;
+const LIVE_REFRESH_INTERVAL_SECONDS = 2.5;
 const SNAPSHOT_TTL_SECONDS = 24 * 60 * 60;
 const SNAPSHOT_WRITE_INTERVAL_SECONDS = 5 * 60;
 const WAITING_ROOM_PROBE_INTERVAL_SECONDS = 30;

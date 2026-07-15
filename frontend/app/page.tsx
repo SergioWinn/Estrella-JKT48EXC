@@ -144,7 +144,7 @@ const WAITING_ROOM_POLLING = {
 
 const LIVE_DETAIL_POLLING = {
 	...FOCUSED_POLLING,
-	refreshInterval: 10000,
+	refreshInterval: 2500,
 } as const;
 
 const CLOCK_TICK_INTERVAL_MS = 30000;
@@ -863,8 +863,8 @@ export default function Page() {
 		: hasStaleData
 			? `Checks every 30s${staleMinutesAgo ? ` · cached ${staleMinutesAgo}` : ""}`
 			: lastUpdatedWib
-				? `Selected event checks every 10s · synced ${formatTime(lastUpdatedWib)} WIB`
-				: "Selected event checks every 10s · waiting for first sync";
+				? `Selected event checks every 2.5s · synced ${formatTime(lastUpdatedWib)} WIB`
+				: "Selected event checks every 2.5s · waiting for first sync";
 	const showGlobalWorkerBanner = Boolean(workerErrorMessage && !currentEvent);
  	const showPrimaryStatus = Boolean(currentEvent || workerErrorMessage);
 
