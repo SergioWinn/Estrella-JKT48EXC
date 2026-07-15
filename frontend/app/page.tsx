@@ -171,10 +171,6 @@ function looksLikeWaitingRoomResponse(response: Response, bodyText: string, payl
 		return true;
 	}
 
-	if (response.status === 429 || response.status === 503) {
-		return true;
-	}
-
 	return (
 		(contentType.includes("text/html") || bodyLower.includes("<html") || bodyLower.includes("<!doctype")) &&
 		(bodyLower.includes("waiting room") || bodyLower.includes("cloudflare") || bodyLower.includes("cf-waitingroom"))
@@ -627,7 +623,7 @@ export default function Page() {
 			);
 		}
 
-		if (payload.isStale || payload.queueStatus === "waiting_room") {
+		if (payload.queueStatus === "waiting_room") {
 			setPathStale(path, true);
 		} else {
 			setPathStale(path, false);
@@ -845,24 +841,30 @@ export default function Page() {
 		membersResponse?.isStale || codesResponse?.isStale || eventsResponse?.isStale || detailSWR.data?.isStale,
 	);
 	const activeCategoryLabel = CATEGORY_LABELS[currentEvent?.category ?? ""] ?? (currentEvent?.category ?? "-").replaceAll("_", " ");
-	const workerWaitingRoom = waitingRoomActive || hasStaleData || isWaitingRoomError(pageError) || isWaitingRoomError(detailError);
+	const workerWaitingRoom = waitingRoomActive || isWaitingRoomError(pageError) || isWaitingRoomError(detailError);
 	const workerErrorMessage = workerWaitingRoom
 		? `Showing the latest cached data${staleMinutesAgo ? ` (${staleMinutesAgo})` : ""}. The upstream queue is active.`
-		: pageError
-			? `Failed to load worker data. ${String(pageError.message)}`
-			: detailError
-				? `Unable to refresh live data. ${String(detailError.message)}`
-				: null;
+		: hasStaleData
+			? `Showing the latest cached data${staleMinutesAgo ? ` (${staleMinutesAgo})` : ""}. Live data is temporarily unavailable.`
+			: pageError
+				? `Failed to load worker data. ${String(pageError.message)}`
+				: detailError
+					? `Unable to refresh live data. ${String(detailError.message)}`
+					: null;
 	const statusSummaryLabel = workerWaitingRoom
-		? "Cached snapshot"
-		: detailError || pageError
+		? "Waiting room"
+		: hasStaleData
+			? "Cached snapshot"
+			: detailError || pageError
 			? "Recovery mode"
 			: "Live monitoring";
 	const statusDetailLabel = workerWaitingRoom
 		? `Retries every 60s${staleMinutesAgo ? ` · cached ${staleMinutesAgo}` : ""}`
-		: lastUpdatedWib
-			? `Selected event checks every 10s · synced ${formatTime(lastUpdatedWib)} WIB`
-			: "Selected event checks every 10s · waiting for first sync";
+		: hasStaleData
+			? `Checks every 30s${staleMinutesAgo ? ` · cached ${staleMinutesAgo}` : ""}`
+			: lastUpdatedWib
+				? `Selected event checks every 10s · synced ${formatTime(lastUpdatedWib)} WIB`
+				: "Selected event checks every 10s · waiting for first sync";
 	const showGlobalWorkerBanner = Boolean(workerErrorMessage && !currentEvent);
  	const showPrimaryStatus = Boolean(currentEvent || workerErrorMessage);
 
@@ -970,16 +972,16 @@ export default function Page() {
 								Tako
 							</a>
 						</div>
-						{workerWaitingRoom || detailError || pageError ? (
+						{workerWaitingRoom || hasStaleData || detailError || pageError ? (
 							<button
 								aria-busy={isRetrying}
 								className="ml-auto inline-flex min-h-10 items-center rounded-full border border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] px-4 py-2 text-sm font-semibold text-[var(--accent-text)] transition hover:bg-[color:var(--surface-soft)]"
-								data-state={isRetrying ? "loading" : workerWaitingRoom || detailError || pageError ? "error" : "default"}
+								data-state={isRetrying ? "loading" : workerWaitingRoom || hasStaleData || detailError || pageError ? "error" : "default"}
 								onClick={retryAll}
 								disabled={isRetrying}
 								type="button"
 							>
-								{isRetrying ? "Refreshing…" : workerWaitingRoom ? "Retry refresh" : "Refresh data"}
+								{isRetrying ? "Refreshing…" : workerWaitingRoom || hasStaleData ? "Retry refresh" : "Refresh data"}
 							</button>
 						) : null}
 					</div>
@@ -990,7 +992,7 @@ export default function Page() {
 				<div
 					aria-live="polite"
 					className={`mb-4 rounded-2xl p-4 text-sm ${
-						workerWaitingRoom
+						workerWaitingRoom || hasStaleData
 							? "border border-[var(--warn)] bg-[color:var(--warn-soft)] text-[var(--warn-text)]"
 							: "border border-[var(--sold)] bg-[color:var(--sold-soft)] text-[var(--sold-text)]"
 					}`}
