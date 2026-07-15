@@ -20,7 +20,28 @@
 			"id": "d64d63e54ad34a82b8a12d39ed10c4e7",
 			"preview_id": "YOUR_PREVIEW_KV_NAMESPACE_ID"
 		}
-	]
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "UPSTREAM_COORDINATOR",
+				"class_name": "UpstreamCoordinator"
+			},
+			{
+				"name": "WAITING_ROOM_COORDINATOR",
+				"class_name": "WaitingRoomCoordinator"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["UpstreamCoordinator", "WaitingRoomCoordinator"]
+		}
+	],
+	"triggers": {
+		"crons": ["*/5 * * * *"]
+	}
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

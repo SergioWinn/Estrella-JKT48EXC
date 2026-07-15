@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { MemberCard, type MemberCardViewModel } from "@/src/components/MemberCard";
 import { getInitialTheme, resolveTheme } from "./theme";
@@ -120,7 +120,6 @@ class ApiError extends Error {
 const API_BASE_URL = "https://api.estrella19.workers.dev";
 const THEME_STORAGE_KEY = "gem-theme";
 
-const FALLBACK_CODES = ["EX783D", "EX9A4A", "EXCD2C", "EXCB75"];
 const FALLBACK_IMAGE =
 	"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 
@@ -131,7 +130,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const FOCUSED_POLLING = {
-	refreshInterval: 3000,
+	refreshInterval: 30000,
 	keepPreviousData: true,
 	refreshWhenHidden: false,
 	revalidateOnFocus: true,
@@ -140,7 +139,12 @@ const FOCUSED_POLLING = {
 
 const WAITING_ROOM_POLLING = {
 	...FOCUSED_POLLING,
-	refreshInterval: 30000,
+	refreshInterval: 60000,
+} as const;
+
+const LIVE_DETAIL_POLLING = {
+	...FOCUSED_POLLING,
+	refreshInterval: 10000,
 } as const;
 
 const CLOCK_TICK_INTERVAL_MS = 30000;
@@ -588,8 +592,16 @@ export default function Page() {
 	const [availableOnly, setAvailableOnly] = useState(false);
 	const [isRetrying, setIsRetrying] = useState(false);
 	const [waitingRoomActive, setWaitingRoomActive] = useState(false);
-	const [eventListStale, setEventListStale] = useState(false);
+	const stalePathsRef = useRef(new Set<string>());
 	const pollingOptions = waitingRoomActive ? WAITING_ROOM_POLLING : FOCUSED_POLLING;
+	const setPathStale = (path: string, isStale: boolean) => {
+		if (isStale) {
+			stalePathsRef.current.add(path);
+		} else {
+			stalePathsRef.current.delete(path);
+		}
+		setWaitingRoomActive(stalePathsRef.current.size > 0);
+	};
 
 	const fetcher = async <T,>(path: string): Promise<T> => {
 		const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -599,7 +611,7 @@ export default function Page() {
 		const payload = parseJsonPayload<T>(bodyText);
 
 		if (looksLikeWaitingRoomResponse(response, bodyText, payload)) {
-			setWaitingRoomActive(true);
+			setPathStale(path, true);
 			throw new ApiError(payload?.message ?? "Cloudflare Waiting Room is active.", 503, "waiting_room");
 		}
 
@@ -616,7 +628,20 @@ export default function Page() {
 		}
 
 		if (payload.isStale || payload.queueStatus === "waiting_room") {
-			setWaitingRoomActive(true);
+			setPathStale(path, true);
+		} else {
+			setPathStale(path, false);
+			if (path === "/exclusives") {
+				const data = parseJsonPayload<ApiEnvelope<ExclusiveListItem[] | { data?: ExclusiveListItem[] }>>(bodyText)?.data;
+				const list = Array.isArray(data) ? data : data?.data ?? [];
+				const activeDetailPaths = new Set(list.flatMap((event) => (event.code ? [`/exclusives/${event.code}`] : [])));
+				for (const stalePath of stalePathsRef.current) {
+					if (stalePath.startsWith("/exclusives/") && !activeDetailPaths.has(stalePath)) {
+						stalePathsRef.current.delete(stalePath);
+					}
+				}
+				setWaitingRoomActive(stalePathsRef.current.size > 0);
+			}
 		}
 		return payload;
 	};
@@ -634,34 +659,13 @@ export default function Page() {
 		mutate: mutateCodes,
 	} = useSWR<ApiEnvelope<ExclusiveListItem[] | { data?: ExclusiveListItem[] }>>("/exclusives", fetcher, pollingOptions);
 
-	const activeCodes = useMemo(() => {
-		const data = codesResponse?.data;
-		const list = Array.isArray(data) ? data : data?.data ?? [];
-		const codes = list.map((event) => event.code).filter((code): code is string => Boolean(code));
-		return codes.length ? codes : FALLBACK_CODES;
-	}, [codesResponse]);
-
-	const { data: eventsData, error: eventsError, isLoading: eventsLoading, mutate: mutateEvents } = useSWR<EventDetail[]>(
-		activeCodes.length ? ["event-list", ...activeCodes] : null,
-		async ([, ...codes]) => {
-			const results = await Promise.all(
-				codes.map(async (code) => {
-					try {
-						return await fetcher<ApiEnvelope<EventDetail>>(`/exclusives/${code}`);
-					} catch {
-						return null;
-					}
-				}),
-			);
-
-			setEventListStale(results.some((event) => event?.isStale));
-			return results
-				.filter((event): event is ApiEnvelope<EventDetail> => event !== null && event.status !== false)
-				.map((event) => event.data)
-				.sort(compareEventsByRecency);
-		},
-		pollingOptions,
-	);
+	const {
+		data: eventsResponse,
+		error: eventsError,
+		isLoading: eventsLoading,
+		mutate: mutateEvents,
+	} = useSWR<ApiEnvelope<EventDetail[]>>("/exclusive-snapshots", fetcher, pollingOptions);
+	const eventsData = eventsResponse?.data;
 
 	const categories = useMemo(() => {
 		const mapped = new Map<string, EventOption[]>();
@@ -704,7 +708,7 @@ export default function Page() {
 		activeEventCode ? `/exclusives/${activeEventCode}` : null,
 		fetcher,
 		{
-			...pollingOptions,
+			...(waitingRoomActive ? WAITING_ROOM_POLLING : LIVE_DETAIL_POLLING),
 			onSuccess: (payload) => {
 				if (!activeEventCode) {
 					return;
@@ -838,7 +842,7 @@ export default function Page() {
 	const detailError = detailSWR.error;
 	const isLoading = membersLoading || codesLoading || eventsLoading;
 	const hasStaleData = Boolean(
-		membersResponse?.isStale || codesResponse?.isStale || detailSWR.data?.isStale || eventListStale,
+		membersResponse?.isStale || codesResponse?.isStale || eventsResponse?.isStale || detailSWR.data?.isStale,
 	);
 	const activeCategoryLabel = CATEGORY_LABELS[currentEvent?.category ?? ""] ?? (currentEvent?.category ?? "-").replaceAll("_", " ");
 	const workerWaitingRoom = waitingRoomActive || hasStaleData || isWaitingRoomError(pageError) || isWaitingRoomError(detailError);
@@ -855,10 +859,10 @@ export default function Page() {
 			? "Recovery mode"
 			: "Live monitoring";
 	const statusDetailLabel = workerWaitingRoom
-		? `Retries every 30s${staleMinutesAgo ? ` · cached ${staleMinutesAgo}` : ""}`
+		? `Retries every 60s${staleMinutesAgo ? ` · cached ${staleMinutesAgo}` : ""}`
 		: lastUpdatedWib
-			? `Checks every 3s · synced ${formatTime(lastUpdatedWib)} WIB`
-			: "Checks every 3s · waiting for first sync";
+			? `Selected event checks every 10s · synced ${formatTime(lastUpdatedWib)} WIB`
+			: "Selected event checks every 10s · waiting for first sync";
 	const showGlobalWorkerBanner = Boolean(workerErrorMessage && !currentEvent);
  	const showPrimaryStatus = Boolean(currentEvent || workerErrorMessage);
 
@@ -868,6 +872,7 @@ export default function Page() {
 		}
 
 		setIsRetrying(true);
+		stalePathsRef.current.clear();
 		setWaitingRoomActive(false);
 		try {
 			await Promise.allSettled([mutateMembers(), mutateCodes(), mutateEvents(), mutateDetail()]);
