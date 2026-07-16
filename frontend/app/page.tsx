@@ -681,7 +681,9 @@ export default function Page() {
 			);
 		}
 
-		return mapped;
+		return new Map(
+			[...mapped.entries()].sort(([, a], [, b]) => compareEventsByRecency(a[0].data, b[0].data)),
+		);
 	}, [eventsData]);
 
 	const categoryKeys = Array.from(categories.keys());
